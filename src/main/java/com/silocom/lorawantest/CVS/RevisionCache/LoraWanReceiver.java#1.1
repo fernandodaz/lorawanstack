@@ -1,0 +1,71 @@
+package com.silocom.lorawantest;
+
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+import javax.crypto.Cipher;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+import org.apache.commons.codec.binary.Base64;
+
+/**
+ *
+ * @author hvarona
+ */
+public class LoraWanReceiver {
+
+    private final byte[] nwSKey;
+    private final byte[] appSKey;
+
+    private final Cipher cipher;
+
+    private SecretKeySpec secretKeySpec;
+
+    public LoraWanReceiver(byte[] nwSKey, byte[] appSKey) throws NoSuchAlgorithmException, NoSuchPaddingException {
+        this.cipher = Cipher.getInstance("AES/CTR/PKCS5Padding");
+        this.nwSKey = nwSKey;
+        this.appSKey = appSKey;
+        secretKeySpec = new SecretKeySpec(appSKey, "AES");
+    }
+
+    public String decodeMessage(String message) {
+        byte[] decodeMessage = Base64.decodeBase64(message);
+        int fCount = ((decodeMessage[7] & 0xff) << 8 | (decodeMessage[6] & 0xff));
+        int devAddress = (decodeMessage[1] & 0xff)
+                | (decodeMessage[2] & 0xff) << 8
+                | (decodeMessage[3] & 0xff) << 16
+                | (decodeMessage[4] & 0xff) << 24;
+        System.out.println(Integer.toHexString(fCount));
+        System.out.println(Integer.toHexString(devAddress));
+        byte[] payload = new byte[decodeMessage.length - 9];
+        System.arraycopy(decodeMessage, 9, payload, 0, decodeMessage.length - 9);
+        return decryptPayload(payload, devAddress, fCount, (byte) 0).substring(0, payload.length - 4);
+    }
+
+    public String decryptPayload(byte[] payload, int devAddress, int fCount, byte dir) {
+        try {
+            byte[] ivKey = new byte[16];
+            Arrays.fill(ivKey, (byte) 0);
+            ivKey[0] = 1;
+            ivKey[15] = 1;
+
+            ivKey[5] = dir;
+            ivKey[6] = (byte) ((devAddress) & 0xFF);
+            ivKey[7] = (byte) ((devAddress >> 8) & 0xFF);
+            ivKey[8] = (byte) ((devAddress >> 16) & 0xFF);
+            ivKey[9] = (byte) ((devAddress >> 24) & 0xFF);
+
+            ivKey[10] = (byte) ((fCount) & 0xFF);
+            ivKey[11] = (byte) ((fCount >> 8) & 0xFF);
+
+            IvParameterSpec ivParameterSpec = new IvParameterSpec(ivKey);
+
+            cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, ivParameterSpec);
+            return new String(cipher.doFinal(payload));
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return null;
+    }
+
+}
