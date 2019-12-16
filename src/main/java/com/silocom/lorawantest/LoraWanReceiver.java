@@ -38,7 +38,6 @@ public class LoraWanReceiver implements MessageListener {
     String modu = null;
 
     String utfString;
-    String guid = "YxRfXk827kPgkmMUX15PNg==";
     PayloadConstructor Sender;
     JsonConstructor jsonCons;
     final int joinRequest = 0x00;
@@ -113,7 +112,7 @@ public class LoraWanReceiver implements MessageListener {
 
                 break;
 
-            case propietary:  //case propiet
+            case propietary:  
                 //TODO
                 break;
 
@@ -252,11 +251,6 @@ public class LoraWanReceiver implements MessageListener {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        /*int rfch = 0;
-    float freq = 0;
-    String datar = null;
-    String codr = null;
-    String modu = null;*/
     }
 
     @Override
