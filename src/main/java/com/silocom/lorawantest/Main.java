@@ -39,12 +39,12 @@ public class Main {
     private Cipher cipher;
     private static PayloadConstructor Sender;
     private static JsonConstructor jsonCons;
-    private static DownlinkMIC downlinkMIC;
+    private static Mic downlinkMIC;
 
     public static void main(String args[]) throws Exception {
 
         com.silocom.m2m.layer.physical.Connection con = PhysicalLayer.addConnection(1, 1700, "192.168.2.69");
-        downlinkMIC = new DownlinkMIC();
+        downlinkMIC = new Mic();
         jsonCons = new JsonConstructor(con);
         Sender = new PayloadConstructor(con, jsonCons, downlinkMIC);
         
@@ -87,5 +87,10 @@ public class Main {
             BadPaddingException, IllegalBlockSizeException {
         cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, ivParameterSpec);
         return new String(cipher.doFinal(array));
+    }
+    
+    public void calculateMIC(byte[] MHDR, byte[] FHDR, byte[] FPort, byte[] FRMPayload, byte[] NewKey ){
+        
+        
     }
 }
