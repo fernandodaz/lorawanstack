@@ -29,26 +29,30 @@ public class Main {
         (byte) 0x2B, (byte) 0xA1, (byte) 0x2D, (byte) 0xDD, (byte) 0xEC,
         (byte) 0xA7, (byte) 0x51, (byte) 0xC6, (byte) 0x23};
 
-    private static final byte[] appSessionKey = new byte[]{(byte) 0x4E,
+    private static final byte[] appSessionKey = new byte[]{(byte) 0x4E, 
         (byte) 0x9D, (byte) 0xE6, (byte) 0x48, (byte) 0x63, (byte) 0x2A,
         (byte) 0xD2, (byte) 0x34, (byte) 0xCD, (byte) 0xF9, (byte) 0x77,
         (byte) 0xA5, (byte) 0x8C, (byte) 0xAB, (byte) 0x9B, (byte) 0xBB};
+
+    private static final byte[] appKey = new byte[]{(byte) 0x1C,
+        (byte) 0x19, (byte) 0x2F, (byte) 0xBE, (byte) 0xC4, (byte) 0x27,
+        (byte) 0x91, (byte) 0x63, (byte) 0x58, (byte) 0xDB, (byte) 0x6C,
+        (byte) 0x1B, (byte) 0xE6, (byte) 0xFF, (byte) 0x2D, (byte) 0xDF};
 
     private IvParameterSpec ivParameterSpec;
     private SecretKeySpec secretKeySpec;
     private Cipher cipher;
     private static PayloadConstructor Sender;
     private static JsonConstructor jsonCons;
-    private static Mic downlinkMIC;
 
     public static void main(String args[]) throws Exception {
 
         com.silocom.m2m.layer.physical.Connection con = PhysicalLayer.addConnection(1, 1700, "192.168.2.69");
-        downlinkMIC = new Mic();
+        //downlinkMIC = new Mic();
         jsonCons = new JsonConstructor(con);
-        Sender = new PayloadConstructor(con, jsonCons, downlinkMIC);
+        Sender = new PayloadConstructor(con, jsonCons);
         
-        LoraWanReceiver rec = new LoraWanReceiver(networkKey, appSessionKey, Sender, jsonCons);
+        LoraWanReceiver rec = new LoraWanReceiver(networkKey, appKey, appSessionKey, Sender, jsonCons);
         con.addListener(rec);
        // rec.messageType("AAABAAAAAACg3buBAQBBQKjzxPpPmhg=");
         

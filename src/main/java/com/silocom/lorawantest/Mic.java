@@ -61,9 +61,23 @@ public abstract class Mic {
         return answer;
     }
 
+    public static byte[] calculateMicJoinResponse(byte[] msg, byte[] appKey) {
+        BlockCipher cipher = new AESEngine();
+        CMac cmac = new CMac(cipher);
+        final CipherParameters params = new KeyParameter(appKey);
+        cmac.init(params);
+        cmac.update(msg, 0, msg.length);
+
+        byte[] temp = new byte[cmac.getMacSize()];
+        byte[] answer = new byte[4];
+        cmac.doFinal(temp, 0);
+        System.arraycopy(temp, 0, answer, 0, answer.length);
+        return answer;
+    }
+
     public static byte[] calculateMicJoinResponse(byte MHDR, byte[] AppNonce,
             byte[] NetID, byte[] DevAddr, byte DLSetting, byte RxDelay,
-            byte[] CFList, byte[] key) {
+            byte[] CFList, byte[] appKey) {
 
         if (AppNonce.length != 3 || NetID.length != 3 || DevAddr.length != 4) {
             return null;
@@ -74,7 +88,7 @@ public abstract class Mic {
 
         BlockCipher cipher = new AESEngine();
         CMac cmac = new CMac(cipher);
-        final CipherParameters params = new KeyParameter(key);
+        final CipherParameters params = new KeyParameter(appKey);
         cmac.init(params);
         cmac.update(MHDR);
 

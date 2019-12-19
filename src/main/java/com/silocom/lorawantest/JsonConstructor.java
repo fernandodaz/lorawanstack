@@ -25,7 +25,7 @@ public class JsonConstructor {
         JsonMessage jsonObject = new JsonMessage(imme, tmst, freq, rfch, powe, modu, datr, codr, ipol, size, ncrc, data);        
         String jsonToSend = gson.toJson(jsonObject);  
         con.sendMessage(jsonToSend.getBytes());
-        System.out.println(" Mensaje enviado: " + jsonToSend.getBytes());
+        System.out.println("Join accepted: " + jsonToSend);  
     }
 
     public class JsonMessage {

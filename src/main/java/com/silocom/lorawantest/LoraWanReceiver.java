@@ -51,6 +51,7 @@ public class LoraWanReceiver implements MessageListener {
 
     private final byte[] nwSKey;
     private final byte[] appSKey;
+    private final byte[] appKey;
 
     private final Cipher cipher;
 
@@ -58,10 +59,11 @@ public class LoraWanReceiver implements MessageListener {
     private final Random rand = new Random();
     private final JsonParser parser = new JsonParser();
 
-    public LoraWanReceiver(byte[] nwSKey, byte[] appSKey, PayloadConstructor Sender, JsonConstructor jsonCons) throws NoSuchAlgorithmException, NoSuchPaddingException {
+    public LoraWanReceiver(byte[] nwSKey, byte[] appSKey, byte[] appKey, PayloadConstructor Sender, JsonConstructor jsonCons) throws NoSuchAlgorithmException, NoSuchPaddingException {
         this.cipher = Cipher.getInstance("AES/CTR/PKCS5Padding");
         this.nwSKey = nwSKey;
         this.appSKey = appSKey;
+        this.appKey = appKey;
         this.Sender = Sender;
         this.jsonCons = jsonCons;
 
@@ -78,9 +80,9 @@ public class LoraWanReceiver implements MessageListener {
         switch (mType) {
 
             case joinRequest:
-                //System.out.print("join request");
+                System.out.print("join request");
                 
-                decodeJoinRequest(message, imme, tmst, freq, rfch, powe, modu, datr, codr, ipol, size, ncrc);
+                decodeJoinRequest(message, imme, tmst, freq, rfch, powe, modu, datr, codr, ipol, size, ncrc, appKey);
                 break;
 
             case joinAccept:
@@ -118,14 +120,14 @@ public class LoraWanReceiver implements MessageListener {
 
             default:
                 decodeMACPayload(message);
-////                System.out.print("mensaje con data");
+                System.out.print("Data up");
 
         }
 
     }
 
     public void decodeJoinRequest(String message, boolean imme, long tmst, float freq, int rfch, int powe,
-            String modu, String datr, String codr, boolean ipol, int size, boolean ncrc) {
+            String modu, String datr, String codr, boolean ipol, int size, boolean ncrc, byte[] appKey) {
 
         byte[] decodeMessage = Base64.decodeBase64(message);
         int mType = (decodeMessage[0] & 0xE0) << 5;
@@ -159,7 +161,7 @@ public class LoraWanReceiver implements MessageListener {
 
         System.out.println(" appNonce: " + appNonce);
 
-        Sender.JoinAccept(appNonce, imme, tmst, freq, rfch, powe, modu, datr, codr, ipol, size, ncrc);
+        Sender.JoinAccept(appNonce, imme, tmst, freq, rfch, powe, modu, datr, codr, ipol, size, ncrc, appKey);
 
     }
 
@@ -223,7 +225,6 @@ public class LoraWanReceiver implements MessageListener {
 
                     // Object of array
                     JsonObject gsonObj = obj.getAsJsonObject();
-
                     // Primitives elements of object
                     data = gsonObj.get("data").getAsString();
                     rssi = gsonObj.get("rssi").getAsInt();
@@ -244,7 +245,7 @@ public class LoraWanReceiver implements MessageListener {
                 System.out.print(" modu: " + modu);
                 System.out.print(" tmst: " + tmst);
                 System.out.print(" size: " + size);
-                
+                // 
                 messageType(data, false, tmst, freq, rfch, 14, modu, datr, codr, true, size, true); //funcion que envia mensaje para ver de que tipo es 
 
             }
