@@ -3,109 +3,135 @@
  */
 package com.silocom.lorawantest;
 
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.spec.SecretKeySpec;
+import org.bouncycastle.crypto.BlockCipher;
+import org.bouncycastle.crypto.CipherParameters;
+import org.bouncycastle.crypto.engines.AESEngine;
+import org.bouncycastle.crypto.macs.CMac;
+import org.bouncycastle.crypto.params.KeyParameter;
 
 /**
  *
  * @author silocom01
  */
-public class Mic {
+public abstract class Mic {
 
-    private static final Cipher cipher;
+    public static byte[] calculateMicMacPayload(byte MHDR, byte[] FHDR,
+            byte fport, byte[] payload, boolean downlink, byte[] key) {
 
-    static {
-        Cipher tmp;
-        try {
-            tmp = Cipher.getInstance("AES/CBC/PKCS5Padding");
-        } catch (Exception ex) {
-            Logger.getLogger(Mic.class.getName()).log(Level.SEVERE, null, ex);
-            tmp = null;
+        BlockCipher cipher = new AESEngine();
+        CMac cmac = new CMac(cipher);
+        final CipherParameters params = new KeyParameter(key);
+        cmac.init(params);
+
+        cmac.update((byte) 0x49);
+        cmac.update((byte) 0x00);
+        cmac.update((byte) 0x00);
+        cmac.update((byte) 0x00);
+        cmac.update((byte) 0x00);
+        cmac.update((byte) (downlink ? 1 : 0));
+
+        for (int i = 3; i >= 0; i--) {
+            cmac.update(FHDR[i]);
         }
-        cipher = tmp;
-    }
 
-    public static byte[] calculateMic(byte MHDR, byte[] FHDR, byte fport, byte[] payload, boolean downlink, byte[] key) {
-        byte[] msg = new byte[3 + FHDR.length + payload.length];
-        int index = 0;
-        msg[index] = MHDR;
-        index++;
-        System.arraycopy(FHDR, 0, msg, index, FHDR.length);
-        index += FHDR.length + 1;
-        msg[index] = fport;
-        index++;
-        System.arraycopy(payload, 0, msg, index, payload.length);
-
-        byte[] blocks = new byte[msg.length + 4 + 1 + 4 + 2 + 1 + 1]; //mensaje + vector inicial + mtpe + address + fcount +00 + tamaño mensaje
-
-        Arrays.fill(blocks, (byte) 0);
-        blocks[0] = 0x49;
-        blocks[1] = downlink ? (byte) 1 : (byte) 0;
-        System.arraycopy(FHDR, 0, blocks, 2, 4);
-        System.arraycopy(FHDR, 5, blocks, 6, 2);
-        blocks[9] = (byte) msg.length;
-        System.arraycopy(msg, 0, blocks, 10, msg.length);
-
-        SecretKeySpec secretKeySpec = new SecretKeySpec(key, "AES");
-        try {
-            cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec);
-            byte[] temp = cipher.doFinal(blocks);
-            byte[] answer = new byte[4];
-            System.arraycopy(temp, 0, answer, 0, 4);
-            return answer;
-            
-        } catch (InvalidKeyException ex) {
-            ex.printStackTrace();
-        } catch (IllegalBlockSizeException ex) {
-            Logger.getLogger(Mic.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (BadPaddingException ex) {
-            Logger.getLogger(Mic.class.getName()).log(Level.SEVERE, null, ex);
+        cmac.update((byte) 0x00);
+        cmac.update((byte) 0x00);
+        for (int i = 6; i >= 5; i--) {
+            cmac.update(FHDR[i]);
         }
-        
-        return null;
+        int msgLen = 2 + FHDR.length + payload.length;
+        cmac.update((byte) msgLen);
+
+        cmac.update(MHDR);
+
+        for (int i = FHDR.length - 1; i >= 0; i--) {
+            cmac.update(FHDR[i]);
+        }
+
+        cmac.update(fport);
+
+        for (int i = payload.length - 1; i >= 0; i--) {
+            cmac.update(payload[i]);
+        }
+
+        byte[] temp = new byte[cmac.getMacSize()];
+        byte[] answer = new byte[4];
+        cmac.doFinal(temp, 0);
+        System.arraycopy(temp, 0, answer, 0, answer.length);
+        return answer;
     }
 
-    public void B0block(byte[] nwkSKey, String message, int devAddr) {
+    public static byte[] calculateMicJoinResponse(byte MHDR, byte[] AppNonce,
+            byte[] NetID, byte[] DevAddr, byte DLSetting, byte RxDelay,
+            byte[] CFList, byte[] key) {
 
-        byte[] B0 = new byte[16];
-        int fcntDown = 0;
+        if (AppNonce.length != 3 || NetID.length != 3 || DevAddr.length != 4) {
+            return null;
+        }
+        if (CFList == null) {
+            CFList = new byte[0];
+        }
 
-        B0[0] = 0x49;
-        B0[1] = 0x00;
-        B0[2] = 0x00;
-        B0[3] = 0x00;
-        B0[4] = 0x00;
-        B0[5] = 0x01;    //0x00 for uplink 0x01 for downlink
-        B0[6] = 0x00;
-        B0[7] = 0x00;
-        B0[8] = 0x00;
-        B0[9] = 0x00;
-        B0[10] = (byte) (fcntDown & 0xFF);
-        B0[11] = (byte) ((fcntDown >> 8) & 0xFF);
-        B0[12] = (byte) ((fcntDown >> 16) & 0xFF);
-        B0[13] = (byte) ((fcntDown >> 24) & 0xFF);
-        B0[14] = 0x00;
-        B0[15] = (byte) message.length();
+        BlockCipher cipher = new AESEngine();
+        CMac cmac = new CMac(cipher);
+        final CipherParameters params = new KeyParameter(key);
+        cmac.init(params);
+        cmac.update(MHDR);
 
-        ++fcntDown;
+        for (int i = AppNonce.length - 1; i >= 0; i--) {
+            cmac.update(AppNonce[i]);
+        }
 
+        for (int i = NetID.length - 1; i >= 0; i--) {
+            cmac.update(NetID[i]);
+        }
+
+        for (int i = DevAddr.length - 1; i >= 0; i--) {
+            cmac.update(DevAddr[i]);
+        }
+
+        cmac.update(DLSetting);
+        cmac.update(RxDelay);
+
+        for (int i = CFList.length - 1; i >= 0; i--) {
+            cmac.update(CFList[i]);
+        }
+
+        byte[] temp = new byte[cmac.getMacSize()];
+        byte[] answer = new byte[4];
+        cmac.doFinal(temp, 0);
+        System.arraycopy(temp, 0, answer, 0, answer.length);
+        return answer;
     }
 
-    public int MIC() {
+    public static byte[] calculateMicJoinRequest(byte MHDR, byte[] AppEUI, byte[] DevEUI, byte[] DevNonce, byte[] AppKey) {
 
-        return 0;
-    }
+        if (AppEUI.length != 8 || DevEUI.length != 8 | DevNonce.length != 2) {
+            return null;
+        }
 
-    //public String AES128Calculator() {
-    //}
-    public Mic() {
+        BlockCipher cipher = new AESEngine();
+        CMac cmac = new CMac(cipher);
+        final CipherParameters params = new KeyParameter(AppKey);
+        cmac.init(params);
+        cmac.update(MHDR);
+
+        for (int i = AppEUI.length - 1; i >= 0; i--) {
+            cmac.update(AppEUI[i]);
+        }
+
+        for (int i = DevEUI.length - 1; i >= 0; i--) {
+            cmac.update(DevEUI[i]);
+        }
+
+        for (int i = DevNonce.length - 1; i >= 0; i--) {
+            cmac.update(DevNonce[i]);
+        }
+
+        byte[] temp = new byte[cmac.getMacSize()];
+        byte[] answer = new byte[4];
+        cmac.doFinal(temp, 0);
+        System.arraycopy(temp, 0, answer, 0, answer.length);
+        return answer;
     }
 }
