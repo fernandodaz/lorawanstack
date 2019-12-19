@@ -16,9 +16,9 @@ public class PayloadConstructor {
     String payloadB64 = null;
     Connection send;
     JsonConstructor jsonCons;
-    DownlinkMIC downlinkMIC;
+    Mic downlinkMIC;
 
-    public PayloadConstructor(Connection send, JsonConstructor jsonCons, DownlinkMIC downlinkMIC) {
+    public PayloadConstructor(Connection send, JsonConstructor jsonCons, Mic downlinkMIC) {
         this.send = send;
         this.jsonCons = jsonCons;
         this.downlinkMIC = downlinkMIC;
