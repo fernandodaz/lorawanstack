@@ -53,7 +53,10 @@ public class PacketForwarder implements MessageListener {
                 
                 pushAckPacket(tokenPush);
                 
-                receiveMessage(message);
+                if (receiver != null){
+                  receiveMessage(message);
+                }
+              
                 
                 break;
 
