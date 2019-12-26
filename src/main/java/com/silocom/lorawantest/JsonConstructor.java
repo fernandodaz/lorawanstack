@@ -12,19 +12,18 @@ import com.google.gson.Gson;
  */
 public class JsonConstructor {
 
-    Connection con;
     PayloadConstructor Pcons;
 
-    public JsonConstructor(Connection con) {
-        this.con = con;
-    }
+
 
     public void SendJson(String data, boolean imme, long tmst, float freq, int rfch, int powe, String modu, String datr,
             String codr, boolean ipol, int size, boolean ncrc) {
         Gson gson = new Gson();  
-        JsonMessage jsonObject = new JsonMessage(imme, tmst, freq, rfch, powe, modu, datr, codr, ipol, size, ncrc, data);        
+        JsonMessage jsonObject = new JsonMessage(imme, tmst, freq, rfch, powe, modu, datr, codr, ipol, size, ncrc, data);  //Construye un objeto y envia como parametros los datos necesarios a la clase JsonMessage para poder construir el Json     
         String jsonToSend = gson.toJson(jsonObject);  
-        con.sendMessage(jsonToSend.getBytes());
+        
+        //enviar a packetForwarder
+        
         System.out.println("Join accepted: " + jsonToSend);  
     }
 

@@ -47,13 +47,13 @@ public class Main {
 
     public static void main(String args[]) throws Exception {
 
-        com.silocom.m2m.layer.physical.Connection con = PhysicalLayer.addConnection(1, 1700, "192.168.2.69");
+        //com.silocom.m2m.layer.physical.Connection con = PhysicalLayer.addConnection(1, 1700, "192.168.2.69");
         //downlinkMIC = new Mic();
-        jsonCons = new JsonConstructor(con);
-        Sender = new PayloadConstructor(con, jsonCons);
+        jsonCons = new JsonConstructor();
+        Sender = new PayloadConstructor(jsonCons);
         
-        LoraWanReceiver rec = new LoraWanReceiver(networkKey, appKey, appSessionKey, Sender, jsonCons);
-        con.addListener(rec);
+        //LoraWanReceiver rec = new LoraWanReceiver(networkKey, appKey, appSessionKey, Sender, jsonCons);
+        //con.addListener(rec);
        // rec.messageType("AAABAAAAAACg3buBAQBBQKjzxPpPmhg=");
         
 

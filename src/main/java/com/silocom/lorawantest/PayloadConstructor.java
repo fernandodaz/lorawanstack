@@ -14,11 +14,11 @@ import org.apache.commons.codec.binary.Base64;
 public class PayloadConstructor {
 
     String payloadB64 = null;
-    Connection send;
+
     JsonConstructor jsonCons;
 
-    public PayloadConstructor(Connection send, JsonConstructor jsonCons) {
-        this.send = send;
+    public PayloadConstructor(JsonConstructor jsonCons) {
+       
         this.jsonCons = jsonCons;
     }
 
@@ -49,10 +49,8 @@ public class PayloadConstructor {
         
         payloadB64 = Base64.encodeBase64String(mesgWithMic);
 
-        jsonCons.SendJson(payloadB64, imme, tmst, freq, rfch, powe, modu, datr, codr, ipol, size, ncrc);
+        jsonCons.SendJson(payloadB64, imme, tmst, freq, rfch, powe, modu, datr, codr, ipol, mesgWithMic.length, ncrc);
 
      }
 
 }
-
-//0 000

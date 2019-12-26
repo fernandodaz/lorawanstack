@@ -25,7 +25,7 @@ import java.util.Random;
  *
  * @author hvarona
  */
-public class LoraWanReceiver implements MessageListener {
+public class LoraWanReceiver /*implements MessageListener*/ {
 
     String data = null;
     int rssi = 0;
@@ -40,7 +40,8 @@ public class LoraWanReceiver implements MessageListener {
     String utfString;
     PayloadConstructor Sender;
     JsonConstructor jsonCons;
-    final int joinRequest = 0x00;
+    
+    final int joinRequest = 0x00;      //Secuencia dada por el documento de LoRaWAN Alliance
     final int joinAccept = 0x01;
     final int unconfirmedDataUp = 0x02;
     final int unconfirmedDataDown = 0x03;
@@ -210,9 +211,8 @@ public class LoraWanReceiver implements MessageListener {
         return null;
     }
 
-    @Override
     public void receiveMessage(byte[] message) {
-        //JsonConstructor jsonConstructor = new JsonConstructor()
+       
         try {
             byte[] mesgWithoutGarbage = new byte[message.length - 12];
             System.arraycopy(message, 12, mesgWithoutGarbage, 0, mesgWithoutGarbage.length);
@@ -254,9 +254,9 @@ public class LoraWanReceiver implements MessageListener {
         }
     }
 
-    @Override
+   /* @Override
     public void receiveMessage(byte[] message, Connection con) {
         //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
+    }*/
 
 }

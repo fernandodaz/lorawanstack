@@ -10,12 +10,18 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.silocom.lorawantest.LoraWanReceiver;
+
 
 /**
  *
  * @author silocom01
  */
 public class PacketForwarder implements MessageListener {
+
+    private LoraWanReceiver receiver;
+    
+    Connection con;
 
     String data = null;
     int rssi = 0;
@@ -28,24 +34,41 @@ public class PacketForwarder implements MessageListener {
     String modu = null;
     private final JsonParser parser = new JsonParser();
 
+    public PacketForwarder(Connection con) {
+        this.con = con;
+    }
+
     public void receiveMessage(byte[] message) {
 
         String mesg = new String(message);
+        
 
         int packetType = message[3] & 0xFF;
 
         switch (packetType) {
 
             case 0:
-
+                int tokenPush = message[1] & 0xFF
+                        | (message[2] & 0xFF) << 8;
+                
+                pushAckPacket(tokenPush);
+                
+                receiveMessage(message);
+                
                 break;
 
             case 1:
 
                 break;
 
-            case 2:
+            case 2:  //Mantiene la sesion udp activa con el gateway,
 
+                int tokenPull = message[1] & 0xFF
+                        | (message[2] & 0xFF) << 8;
+
+                pullAckPacket(tokenPull);
+
+                
                 break;
 
             case 3:
@@ -58,35 +81,46 @@ public class PacketForwarder implements MessageListener {
 
         }
 
-        /*int version = message[0] & 0xFF;
-    int token = message[1] & 0xFF
-     | (message[2] & 0xFF) << 8;
-    
-    int
-     
-    long GwID = (message[4] & 0xFF)
-                | (message[5] & (long) 0xFF) << 8
-                | (message[6] & (long) 0xFF) << 16
-                | (message[7] & (long) 0xFF) << 24
-                | (message[8] & (long) 0xFF) << 32
-                | (message[9] & (long) 0xFF) << 40;*/
-        //System.out.print(" - GwID " + Long.toHexString(GwID));
-        // System.out.print(" - Version " + Long.toHexString(version));
-        //System.out.println(" - token " + Long.toHexString(token));
+        
         System.out.println(" - packetType " + Long.toHexString(packetType));
 
+    }
+
+    public void setReceiver(LoraWanReceiver receiver) {
+        this.receiver = receiver;
     }
 
     public void pushDataPacket() {
     }
 
-    public void pushAckPacket() {
+    public void pushAckPacket(int tokenPush) {
+        byte[] mesgToSend = new byte[4];
+        mesgToSend[0] = 0x02;
+        mesgToSend[1] = (byte) (tokenPush & 0xFF);
+        mesgToSend[2] = (byte) ((tokenPush >> 8) & 0xFF);
+        mesgToSend[3] = 0x01;
+
+        con.sendMessage(mesgToSend);
+        
+        
     }
 
     public void pullDataPacket() {
     }
 
-    public void pullAckPacket() {
+    public void pullAckPacket(int tokenPull) {
+
+        byte[] mesgToSend = new byte[4];
+
+        mesgToSend[0] = 0x02;
+        mesgToSend[1] = (byte) (tokenPull & 0xFF);
+        mesgToSend[2] = (byte) ((tokenPull >> 8) & 0xFF);
+        mesgToSend[3] = 0x04;
+
+        con.sendMessage(mesgToSend);
+    }
+
+    public void pullRespPacket() {
     }
 
     @Override
