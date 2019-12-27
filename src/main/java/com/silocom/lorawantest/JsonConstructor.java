@@ -29,7 +29,7 @@ public class JsonConstructor {
         String finaljsonToSend = gson.toJson(finalJsonToSend);
         //
 
-        System.out.println(" Join Accept > " + finaljsonToSend);
+        //System.out.println(" Join Accept > " + finaljsonToSend);
         return finaljsonToSend;
     }
 

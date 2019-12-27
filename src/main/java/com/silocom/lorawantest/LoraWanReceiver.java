@@ -73,7 +73,7 @@ public class LoraWanReceiver /*implements MessageListener*/ {
         secretKeySpec = new SecretKeySpec(appSKey, "AES");
     }
 
-    public void ReceiveMessage(String message, boolean imme, long tmst, float freq, int rfch, int powe,
+    public void ReceiveMessage(byte[] messageComplete,String message, boolean imme, long tmst, float freq, int rfch, int powe,
             String modu, String datr, String codr, boolean ipol, int size, boolean ncrc) {
         // System.out.println("decode message");
         //Definir variables globales existentes, como locales
@@ -84,7 +84,9 @@ public class LoraWanReceiver /*implements MessageListener*/ {
         switch (mType) {
 
             case joinRequest:
-                System.out.print("join request");
+
+                String string = new String(messageComplete);
+                System.out.println(" Join Request: " + string);
 
                 decodeJoinRequest(message, imme, tmst, freq, rfch, powe, modu, datr, codr, ipol, size, ncrc, appKey);
                 break;
@@ -156,10 +158,7 @@ public class LoraWanReceiver /*implements MessageListener*/ {
         int devNonce = (decodeMessage[18] & 0xFF)
                 | (decodeMessage[17] & 0xFF) << 8;
 
-
         int appNonce = rand.nextInt(0x100000) + 0xEFFFFF;
-
-        System.out.println(" appNonce: " + appNonce);
 
         this.pForwarder.sendMessage(Sender.JoinAccept(appNonce, imme, tmst, freq, rfch, powe, modu, datr, codr, ipol, size, ncrc, appKey));
 
@@ -174,11 +173,6 @@ public class LoraWanReceiver /*implements MessageListener*/ {
                 | (decodeMessage[4] & 0xff) << 24;
         int fCtrl = decodeMessage[5] & 0xFF;
         int fCount = ((decodeMessage[7] & 0xff) << 8 | (decodeMessage[6] & 0xff));
-
-        System.out.println("Frame count: " + Integer.toHexString(fCount));
-        System.out.println("Device address: " + Integer.toHexString(devAddress));
-        System.out.println("Mtype: " + Integer.toHexString(mType));
-        System.out.println("FCtrl: " + Integer.toHexString(fCtrl));
 
         byte[] payload = new byte[decodeMessage.length - 9];
         System.arraycopy(decodeMessage, 9, payload, 0, decodeMessage.length - 9);

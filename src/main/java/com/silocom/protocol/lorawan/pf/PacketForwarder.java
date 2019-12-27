@@ -61,7 +61,7 @@ public class PacketForwarder implements MessageListener {
                         byte[] mesgWithoutGarbage = new byte[message.length - 12];
                         System.arraycopy(message, 12, mesgWithoutGarbage, 0, mesgWithoutGarbage.length);
                         String jsonMessage = new String(mesgWithoutGarbage);
-                        System.out.println(jsonMessage);
+                        //System.out.println(jsonMessage);
 
                         JsonObject gsonArr = parser.parse(jsonMessage).getAsJsonObject();
                         if (gsonArr.get("rxpk") != null) {
@@ -80,15 +80,15 @@ public class PacketForwarder implements MessageListener {
                                 freq = gsonObj.get("freq").getAsFloat();
 
                             }
-                            System.out.print(" data: " + data);
+                           /* System.out.print(" data: " + data);
                             System.out.print(" rfch: " + rfch);
                             System.out.print(" datr: " + datr);
                             System.out.print(" codr: " + codr);
                             System.out.print(" modu: " + modu);
                             System.out.print(" tmst: " + tmst);
-                            System.out.print(" size: " + size);
+                            System.out.print(" size: " + size);*/
                             // 
-                            receiver.ReceiveMessage(data, false, tmst, freq, rfch, 14, modu, datr, codr, true, size, true); //funcion que envia mensaje para ver de que tipo es 
+                            receiver.ReceiveMessage(message, data, true, tmst, freq, rfch, 14, modu, datr, codr, true, size, true); //funcion que envia mensaje para ver de que tipo es 
 
                         }
                     } catch (Exception e) {
@@ -162,7 +162,7 @@ public class PacketForwarder implements MessageListener {
         byte[] token = new byte[2];
         new Random().nextBytes(token);
 
-        System.out.println(" send message en PF: " + JsonTxpk);
+        //System.out.println( JsonTxpk);
         byte[] mesgToSend = new byte[4 + data.length];
         mesgToSend[0] = 0x02;
         mesgToSend[1] = token[0];
@@ -172,7 +172,7 @@ public class PacketForwarder implements MessageListener {
         con.sendMessage(mesgToSend);
 
         String string = new String(mesgToSend);
-        System.out.print(string);
+        System.out.println(" Join accept: " + string);
 
     }
 

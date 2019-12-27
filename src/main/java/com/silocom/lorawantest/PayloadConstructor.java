@@ -48,7 +48,7 @@ public class PayloadConstructor {
         System.arraycopy(mic, 0, mesgWithMic, mesgWithMic.length-5, 4);
         
         payloadB64 = Base64.encodeBase64String(mesgWithMic);
-        System.out.println(" PB64 " + payloadB64);
+        
         return jsonCons.SendJson(payloadB64, imme, tmst, freq, rfch, powe, modu, datr, codr, ipol, mesgWithMic.length, ncrc);
         
         
