@@ -154,6 +154,10 @@ public class PacketForwarder implements MessageListener {
 
     public void pullRespPacket() {
     }
+    
+    public void sendMessage(){
+    
+    }
 
     @Override
     public void receiveMessage(byte[] message, Connection con) {
