@@ -1,6 +1,7 @@
 package com.silocom.lorawantest;
 
 import com.silocom.m2m.layer.physical.PhysicalLayer;
+import com.silocom.protocol.lorawan.pf.PacketForwarder;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -15,7 +16,6 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import org.apache.commons.codec.binary.Base64;
 
-
 /**
  *
  * @author hvarona
@@ -24,12 +24,12 @@ public class Main {
 
     private static final String ALGORITHM = "AES";
 
-    private static final byte[] networkKey = new byte[]{(byte) 0xFD, (byte) 0x57,
+    private static final byte[] nwSKey = new byte[]{(byte) 0xFD, (byte) 0x57,
         (byte) 0x7F, (byte) 0x5F, (byte) 0x7B, (byte) 0xFB, (byte) 0xD3,
         (byte) 0x2B, (byte) 0xA1, (byte) 0x2D, (byte) 0xDD, (byte) 0xEC,
         (byte) 0xA7, (byte) 0x51, (byte) 0xC6, (byte) 0x23};
 
-    private static final byte[] appSessionKey = new byte[]{(byte) 0x4E, 
+    private static final byte[] appSKey = new byte[]{(byte) 0x4E,
         (byte) 0x9D, (byte) 0xE6, (byte) 0x48, (byte) 0x63, (byte) 0x2A,
         (byte) 0xD2, (byte) 0x34, (byte) 0xCD, (byte) 0xF9, (byte) 0x77,
         (byte) 0xA5, (byte) 0x8C, (byte) 0xAB, (byte) 0x9B, (byte) 0xBB};
@@ -44,18 +44,15 @@ public class Main {
     private Cipher cipher;
     private static PayloadConstructor Sender;
     private static JsonConstructor jsonCons;
+    private static PacketForwarder packetForwarder;
+    private static LoraWanReceiver loraWanReceiver;
 
     public static void main(String args[]) throws Exception {
-
-        //com.silocom.m2m.layer.physical.Connection con = PhysicalLayer.addConnection(1, 1700, "192.168.2.69");
-        //downlinkMIC = new Mic();
+        packetForwarder = new PacketForwarder(null);
+        loraWanReceiver = new LoraWanReceiver(nwSKey, appSKey, appKey, packetForwarder);
+        
         jsonCons = new JsonConstructor();
         Sender = new PayloadConstructor(jsonCons);
-        
-        //LoraWanReceiver rec = new LoraWanReceiver(networkKey, appKey, appSessionKey, Sender, jsonCons);
-        //con.addListener(rec);
-       // rec.messageType("AAABAAAAAACg3buBAQBBQKjzxPpPmhg=");
-        
 
     }
 
@@ -67,7 +64,7 @@ public class Main {
                 (byte) 0xDD, (byte) 0xBB, (byte) 0x81, (byte) 0x01,
                 (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00,
                 (byte) 0x00, (byte) 0x01});
-            secretKeySpec = new SecretKeySpec(appSessionKey, "AES");
+            secretKeySpec = new SecretKeySpec(appSKey, "AES");
             cipher = Cipher.getInstance("AES/CTR/PKCS5Padding");
         } catch (Exception ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
@@ -92,9 +89,8 @@ public class Main {
         cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, ivParameterSpec);
         return new String(cipher.doFinal(array));
     }
-    
-    public void calculateMIC(byte[] MHDR, byte[] FHDR, byte[] FPort, byte[] FRMPayload, byte[] NewKey ){
-        
-        
+
+    public void calculateMIC(byte[] MHDR, byte[] FHDR, byte[] FPort, byte[] FRMPayload, byte[] NewKey) {
+
     }
 }

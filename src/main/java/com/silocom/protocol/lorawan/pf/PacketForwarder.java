@@ -11,6 +11,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.silocom.lorawantest.LoraWanReceiver;
+import java.util.Random;
 
 /**
  *
@@ -154,9 +155,25 @@ public class PacketForwarder implements MessageListener {
 
     public void pullRespPacket() {
     }
-    
-    public void sendMessage(){
-    
+
+    public void sendMessage(String JsonTxpk) {
+
+        byte[] data = JsonTxpk.getBytes();
+        byte[] token = new byte[2];
+        new Random().nextBytes(token);
+
+        System.out.println(" send message en PF: " + JsonTxpk);
+        byte[] mesgToSend = new byte[4 + data.length];
+        mesgToSend[0] = 0x02;
+        mesgToSend[1] = token[0];
+        mesgToSend[2] = token[1];
+        mesgToSend[3] = 0x03;
+        System.arraycopy(data, 0, mesgToSend, 4, data.length);
+        con.sendMessage(mesgToSend);
+
+        String string = new String(mesgToSend);
+        System.out.print(string);
+
     }
 
     @Override

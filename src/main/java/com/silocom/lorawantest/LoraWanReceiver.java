@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.silocom.m2m.layer.physical.Connection;
 import com.silocom.m2m.layer.physical.MessageListener;
+import com.silocom.protocol.lorawan.pf.PacketForwarder;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -40,6 +41,7 @@ public class LoraWanReceiver /*implements MessageListener*/ {
     String utfString;
     PayloadConstructor Sender;
     JsonConstructor jsonCons;
+    PacketForwarder pForwarder;
 
     final int joinRequest = 0x00;      //Secuencia dada por el documento de LoRaWAN Alliance
     final int joinAccept = 0x01;
@@ -60,11 +62,12 @@ public class LoraWanReceiver /*implements MessageListener*/ {
     private final Random rand = new Random();
     private final JsonParser parser = new JsonParser();
 
-    public LoraWanReceiver(byte[] nwSKey, byte[] appSKey, byte[] appKey) throws NoSuchAlgorithmException, NoSuchPaddingException {
+    public LoraWanReceiver(byte[] nwSKey, byte[] appSKey, byte[] appKey, PacketForwarder pf) throws NoSuchAlgorithmException, NoSuchPaddingException {
         this.cipher = Cipher.getInstance("AES/CTR/PKCS5Padding");
         this.nwSKey = nwSKey;
         this.appSKey = appSKey;
         this.appKey = appKey;
+        this.pForwarder = pf;
         this.jsonCons = new JsonConstructor();
         this.Sender = new PayloadConstructor(jsonCons);
         secretKeySpec = new SecretKeySpec(appSKey, "AES");
@@ -73,6 +76,7 @@ public class LoraWanReceiver /*implements MessageListener*/ {
     public void ReceiveMessage(String message, boolean imme, long tmst, float freq, int rfch, int powe,
             String modu, String datr, String codr, boolean ipol, int size, boolean ncrc) {
         // System.out.println("decode message");
+        //Definir variables globales existentes, como locales
 
         byte[] decodeMessage = Base64.decodeBase64(message);
         int mType = decodeMessage[0] & 0xFF;
@@ -152,16 +156,12 @@ public class LoraWanReceiver /*implements MessageListener*/ {
         int devNonce = (decodeMessage[18] & 0xFF)
                 | (decodeMessage[17] & 0xFF) << 8;
 
-        System.out.println(" appEUI: " + Long.toHexString(appEUI));
-        System.out.println(" devAddr: " + Long.toHexString(devAddr));
-        System.out.println(" mType: " + Integer.toHexString(mType));
-        System.out.println(" devNonce: " + Integer.toHexString(devNonce));
 
         int appNonce = rand.nextInt(0x100000) + 0xEFFFFF;
 
         System.out.println(" appNonce: " + appNonce);
 
-        Sender.JoinAccept(appNonce, imme, tmst, freq, rfch, powe, modu, datr, codr, ipol, size, ncrc, appKey);
+        this.pForwarder.sendMessage(Sender.JoinAccept(appNonce, imme, tmst, freq, rfch, powe, modu, datr, codr, ipol, size, ncrc, appKey));
 
     }
 

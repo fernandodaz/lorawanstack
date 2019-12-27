@@ -17,7 +17,7 @@ public class Main {
         
         com.silocom.m2m.layer.physical.Connection con = PhysicalLayer.addConnection(1, 1700, "192.168.2.69");
         PacketForwarder rec = new PacketForwarder(con);
-        LoraWanReceiver LoraWan = new LoraWanReceiver(nwSKey, appSKey, appKey);
+        LoraWanReceiver LoraWan = new LoraWanReceiver(nwSKey, appSKey, appKey, rec);
         rec.setReceiver(LoraWan);
         con.addListener(rec);
 
