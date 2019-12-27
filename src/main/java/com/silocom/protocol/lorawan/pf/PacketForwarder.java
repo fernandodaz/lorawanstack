@@ -12,7 +12,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.silocom.lorawantest.LoraWanReceiver;
 
-
 /**
  *
  * @author silocom01
@@ -20,7 +19,7 @@ import com.silocom.lorawantest.LoraWanReceiver;
 public class PacketForwarder implements MessageListener {
 
     private LoraWanReceiver receiver;
-    
+
     Connection con;
 
     String data = null;
@@ -38,10 +37,13 @@ public class PacketForwarder implements MessageListener {
         this.con = con;
     }
 
+    public void setReceiver(LoraWanReceiver receiver) {
+        this.receiver = receiver;
+    }
+
     public void receiveMessage(byte[] message) {
 
         String mesg = new String(message);
-        
 
         int packetType = message[3] & 0xFF;
 
@@ -50,14 +52,48 @@ public class PacketForwarder implements MessageListener {
             case 0:
                 int tokenPush = message[1] & 0xFF
                         | (message[2] & 0xFF) << 8;
-                
+
                 pushAckPacket(tokenPush);
-                
-                if (receiver != null){
-                  receiveMessage(message);
+
+                if (receiver != null) {
+                    try {
+                        byte[] mesgWithoutGarbage = new byte[message.length - 12];
+                        System.arraycopy(message, 12, mesgWithoutGarbage, 0, mesgWithoutGarbage.length);
+                        String jsonMessage = new String(mesgWithoutGarbage);
+                        System.out.println(jsonMessage);
+
+                        JsonObject gsonArr = parser.parse(jsonMessage).getAsJsonObject();
+                        if (gsonArr.get("rxpk") != null) {
+                            for (JsonElement obj : gsonArr.get("rxpk").getAsJsonArray()) {
+
+                                // Object of array
+                                JsonObject gsonObj = obj.getAsJsonObject();
+                                // Primitives elements of object
+                                data = gsonObj.get("data").getAsString();
+                                rfch = gsonObj.get("rfch").getAsInt();
+                                size = gsonObj.get("size").getAsInt();
+                                datr = gsonObj.get("datr").getAsString();
+                                codr = gsonObj.get("codr").getAsString();
+                                modu = gsonObj.get("modu").getAsString();
+                                tmst = gsonObj.get("tmst").getAsLong();
+                                freq = gsonObj.get("freq").getAsFloat();
+
+                            }
+                            System.out.print(" data: " + data);
+                            System.out.print(" rfch: " + rfch);
+                            System.out.print(" datr: " + datr);
+                            System.out.print(" codr: " + codr);
+                            System.out.print(" modu: " + modu);
+                            System.out.print(" tmst: " + tmst);
+                            System.out.print(" size: " + size);
+                            // 
+                            receiver.ReceiveMessage(data, false, tmst, freq, rfch, 14, modu, datr, codr, true, size, true); //funcion que envia mensaje para ver de que tipo es 
+
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
-              
-                
                 break;
 
             case 1:
@@ -71,7 +107,6 @@ public class PacketForwarder implements MessageListener {
 
                 pullAckPacket(tokenPull);
 
-                
                 break;
 
             case 3:
@@ -84,13 +119,8 @@ public class PacketForwarder implements MessageListener {
 
         }
 
-        
         System.out.println(" - packetType " + Long.toHexString(packetType));
 
-    }
-
-    public void setReceiver(LoraWanReceiver receiver) {
-        this.receiver = receiver;
     }
 
     public void pushDataPacket() {
@@ -104,8 +134,7 @@ public class PacketForwarder implements MessageListener {
         mesgToSend[3] = 0x01;
 
         con.sendMessage(mesgToSend);
-        
-        
+
     }
 
     public void pullDataPacket() {

@@ -40,7 +40,7 @@ public class LoraWanReceiver /*implements MessageListener*/ {
     String utfString;
     PayloadConstructor Sender;
     JsonConstructor jsonCons;
-    
+
     final int joinRequest = 0x00;      //Secuencia dada por el documento de LoRaWAN Alliance
     final int joinAccept = 0x01;
     final int unconfirmedDataUp = 0x02;
@@ -60,18 +60,17 @@ public class LoraWanReceiver /*implements MessageListener*/ {
     private final Random rand = new Random();
     private final JsonParser parser = new JsonParser();
 
-    public LoraWanReceiver(byte[] nwSKey, byte[] appSKey, byte[] appKey, PayloadConstructor Sender, JsonConstructor jsonCons) throws NoSuchAlgorithmException, NoSuchPaddingException {
+    public LoraWanReceiver(byte[] nwSKey, byte[] appSKey, byte[] appKey) throws NoSuchAlgorithmException, NoSuchPaddingException {
         this.cipher = Cipher.getInstance("AES/CTR/PKCS5Padding");
         this.nwSKey = nwSKey;
         this.appSKey = appSKey;
         this.appKey = appKey;
-        this.Sender = Sender;
-        this.jsonCons = jsonCons;
-
+        this.jsonCons = new JsonConstructor();
+        this.Sender = new PayloadConstructor(jsonCons);
         secretKeySpec = new SecretKeySpec(appSKey, "AES");
     }
 
-    public void messageType(String message, boolean imme, long tmst, float freq, int rfch, int powe,
+    public void ReceiveMessage(String message, boolean imme, long tmst, float freq, int rfch, int powe,
             String modu, String datr, String codr, boolean ipol, int size, boolean ncrc) {
         // System.out.println("decode message");
 
@@ -82,7 +81,7 @@ public class LoraWanReceiver /*implements MessageListener*/ {
 
             case joinRequest:
                 System.out.print("join request");
-                
+
                 decodeJoinRequest(message, imme, tmst, freq, rfch, powe, modu, datr, codr, ipol, size, ncrc, appKey);
                 break;
 
@@ -115,7 +114,7 @@ public class LoraWanReceiver /*implements MessageListener*/ {
 
                 break;
 
-            case propietary:  
+            case propietary:
                 //TODO
                 break;
 
@@ -211,52 +210,8 @@ public class LoraWanReceiver /*implements MessageListener*/ {
         return null;
     }
 
-    public void receiveMessage(byte[] message) {
-       
-        try {
-            byte[] mesgWithoutGarbage = new byte[message.length - 12];
-            System.arraycopy(message, 12, mesgWithoutGarbage, 0, mesgWithoutGarbage.length);
-            String jsonMessage = new String(mesgWithoutGarbage);
-            System.out.println(jsonMessage);
-
-            JsonObject gsonArr = parser.parse(jsonMessage).getAsJsonObject();
-            if (gsonArr.get("rxpk") != null) {
-                for (JsonElement obj : gsonArr.get("rxpk").getAsJsonArray()) {
-
-                    // Object of array
-                    JsonObject gsonObj = obj.getAsJsonObject();
-                    // Primitives elements of object
-                    data = gsonObj.get("data").getAsString();
-                    rssi = gsonObj.get("rssi").getAsInt();
-                    rfch = gsonObj.get("rfch").getAsInt();
-                    size = gsonObj.get("size").getAsInt();
-                    datr = gsonObj.get("datr").getAsString();
-                    codr = gsonObj.get("codr").getAsString();
-                    modu = gsonObj.get("modu").getAsString();
-                    tmst = gsonObj.get("tmst").getAsLong();
-                    freq = gsonObj.get("freq").getAsFloat();
-
-                }
-                System.out.print(" data: " + data);
-                System.out.print(" rssi: " + rssi);
-                System.out.print(" rfch: " + rfch);
-                System.out.print(" datr: " + datr);
-                System.out.print(" codr: " + codr);
-                System.out.print(" modu: " + modu);
-                System.out.print(" tmst: " + tmst);
-                System.out.print(" size: " + size);
-                // 
-                messageType(data, false, tmst, freq, rfch, 14, modu, datr, codr, true, size, true); //funcion que envia mensaje para ver de que tipo es 
-
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-   /* @Override
+    /* @Override
     public void receiveMessage(byte[] message, Connection con) {
         //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }*/
-
 }
