@@ -43,7 +43,7 @@ public class PayloadConstructor {
         DevAddr[0] = 0x00;
         DevAddr[1] = 0x00;
         DevAddr[2] = 0x00;
-        DevAddr[2] = 0x00;
+        DevAddr[3] = 0x00;
 
         byte DLSetting = 2;
 
