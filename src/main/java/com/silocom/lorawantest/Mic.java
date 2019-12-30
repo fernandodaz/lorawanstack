@@ -107,9 +107,10 @@ public abstract class Mic {
         cmac.update(DLSetting);
         cmac.update(RxDelay);
 
-        for (int i = CFList.length - 1; i >= 0; i--) {
+        /*for (int i = CFList.length - 1; i >= 0; i--) {
             cmac.update(CFList[i]);
-        }
+        }*/
+        cmac.update(CFList, 0, CFList.length);
 
         byte[] temp = new byte[cmac.getMacSize()];
         byte[] answer = new byte[4];
