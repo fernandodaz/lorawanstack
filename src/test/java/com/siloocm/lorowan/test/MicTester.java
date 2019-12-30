@@ -66,7 +66,7 @@ public class MicTester extends TestCase {
 
     @Test
     public void testMicJoinAcceptConstructor() {
-        byte MHDR = 0x20;
+        byte MHDR = 0x40;
         byte[] AppNonce = new byte[]{(byte) 0x09, (byte) 0xFA, (byte) 0x79};
         byte[] NetID = new byte[]{(byte) 0xF0, (byte) 0x56, (byte) 0x30};
         byte[] DevAddr = new byte[]{(byte) 0xDC, (byte) 0xE1, (byte) 0x23, (byte) 0x8C};
