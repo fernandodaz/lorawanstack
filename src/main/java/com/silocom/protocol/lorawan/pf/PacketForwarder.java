@@ -11,6 +11,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.silocom.lorawantest.LoraWanReceiver;
+import com.silocom.lorawantest.Utils;
 import java.util.Random;
 
 /**
@@ -33,6 +34,8 @@ public class PacketForwarder implements MessageListener {
     String codr = null;
     String modu = null;
     private final JsonParser parser = new JsonParser();
+
+    byte[] sendBuffer = new byte[0];
 
     public PacketForwarder(Connection con) {
         this.con = con;
@@ -80,7 +83,7 @@ public class PacketForwarder implements MessageListener {
                                 freq = gsonObj.get("freq").getAsFloat();
 
                             }
-                           /* System.out.print(" data: " + data);
+                            /* System.out.print(" data: " + data);
                             System.out.print(" rfch: " + rfch);
                             System.out.print(" datr: " + datr);
                             System.out.print(" codr: " + codr);
@@ -103,10 +106,15 @@ public class PacketForwarder implements MessageListener {
 
             case 2:  //Mantiene la sesion udp activa con el gateway,
 
+               
                 int tokenPull = message[1] & 0xFF
                         | (message[2] & 0xFF) << 8;
 
                 pullAckPacket(tokenPull);
+                if (sendBuffer.length > 0) {
+                    con.sendMessage(sendBuffer);
+                    sendBuffer = new byte[0];
+                } 
 
                 break;
 
@@ -116,6 +124,13 @@ public class PacketForwarder implements MessageListener {
 
             case 4:
 
+                break;
+            
+            case 5:
+
+                System.out.println(" MSG RECEIVED : " + Utils.hexToString(message));
+                
+                
                 break;
 
         }
@@ -169,8 +184,8 @@ public class PacketForwarder implements MessageListener {
         mesgToSend[2] = token[1];
         mesgToSend[3] = 0x03;
         System.arraycopy(data, 0, mesgToSend, 4, data.length);
-        con.sendMessage(mesgToSend);
-
+        //con.sendMessage(mesgToSend);
+        sendBuffer = mesgToSend;
         String string = new String(mesgToSend);
         System.out.println(" Join accept: " + string);
 

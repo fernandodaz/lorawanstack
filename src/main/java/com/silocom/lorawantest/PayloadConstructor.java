@@ -38,15 +38,15 @@ public class PayloadConstructor {
         AppNonce[0] = (byte) ((appNonce >> 16) & 0xFF);
 
         byte[] NetID = new byte[3];
-        NetID[0] = 0x00;
+        NetID[0] = 0x01;
         NetID[1] = 0x00;
-        NetID[2] = 0x00;
+        NetID[2] = 0x01;
 
         byte[] DevAddr = new byte[4];
-        DevAddr[0] = 0x00;
+        DevAddr[0] = 0x01;
         DevAddr[1] = 0x00;
         DevAddr[2] = 0x00;
-        DevAddr[3] = 0x00;
+        DevAddr[3] = 0x01;
 
         byte DLSetting = 2;
 
@@ -81,7 +81,7 @@ public class PayloadConstructor {
             message = new byte[buffer.length + 1];
             System.arraycopy(buffer, 0, message, 1, buffer.length);
             message[0] = mhdr;
-            
+
             decodeJoinAccept(message, appKey);
 
             payloadB64 = Base64.encodeBase64String(message);
@@ -141,6 +141,7 @@ public class PayloadConstructor {
 
             byte[] mic = new byte[4];
             System.arraycopy(srcmsg, srcmsg.length - 4, mic, 0, 4);
+            System.out.println("MSG : " + Utils.hexToString(message));
             System.out.println("MHDR : " + Integer.toHexString(MHDR));
             System.out.println("AppNonce : " + Utils.hexToString(AppNonce));
             System.out.println("NetId : " + Utils.hexToString(NetID));
