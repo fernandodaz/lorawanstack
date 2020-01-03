@@ -61,6 +61,7 @@ public class JsonConstructor {
         public JsonMessage(boolean imme, long tmst, float freq, int rfch, int powe, String modu, String datr, String codr, boolean ipol, int size, boolean ncrc, String data) {
 
             this.imme = imme;
+            
             this.tmst = tmst;
             this.freq = freq;
             this.rfch = rfch;
@@ -70,7 +71,7 @@ public class JsonConstructor {
             this.codr = codr;
             this.ipol = ipol;
             this.size = size;
-            this.ncrc = ncrc;
+           // this.ncrc = ncrc;
             this.data = data;
         }
 

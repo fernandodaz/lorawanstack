@@ -73,7 +73,7 @@ public class LoraWanReceiver /*implements MessageListener*/ {
         secretKeySpec = new SecretKeySpec(appSKey, "AES");
     }
 
-    public void ReceiveMessage(byte[] messageComplete,String message, boolean imme, long tmst, float freq, int rfch, int powe,
+    public void ReceiveMessage(byte[] messageComplete, String message, boolean imme, long tmst, float freq, int rfch, int powe,
             String modu, String datr, String codr, boolean ipol, int size, boolean ncrc) {
         // System.out.println("decode message");
         //Definir variables globales existentes, como locales
@@ -126,7 +126,9 @@ public class LoraWanReceiver /*implements MessageListener*/ {
 
             default:
                 decodeMACPayload(message);
-                System.out.print("Data up");
+                String string2 = new String(messageComplete);
+                System.out.println("Data up: " + string2);
+              
 
         }
 
@@ -166,6 +168,7 @@ public class LoraWanReceiver /*implements MessageListener*/ {
 
     public String decodeMACPayload(String message) {
         byte[] decodeMessage = Base64.decodeBase64(message);
+        // System.out.println("Message Decoded: " + Utils.hexToString(decodeMessage));
         int mType = decodeMessage[0] & 0xFF;
         int devAddress = (decodeMessage[1] & 0xff)
                 | (decodeMessage[2] & 0xff) << 8
@@ -198,6 +201,7 @@ public class LoraWanReceiver /*implements MessageListener*/ {
             IvParameterSpec ivParameterSpec = new IvParameterSpec(ivKey);
 
             cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, ivParameterSpec);
+            
             return new String(cipher.doFinal(payload));
         } catch (InvalidAlgorithmParameterException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException ex) {
         }

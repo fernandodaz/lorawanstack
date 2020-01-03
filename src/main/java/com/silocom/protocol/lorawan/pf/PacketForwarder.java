@@ -91,7 +91,7 @@ public class PacketForwarder implements MessageListener {
                             System.out.print(" tmst: " + tmst);
                             System.out.print(" size: " + size);*/
                             // 
-                            receiver.ReceiveMessage(message, data, true, tmst, freq, rfch, 14, modu, datr, codr, true, size, true); //funcion que envia mensaje para ver de que tipo es 
+                            receiver.ReceiveMessage(message, data, false, tmst + 6000000, freq, rfch, 14, modu, datr, codr, true, size, true); //funcion que envia mensaje para ver de que tipo es 
 
                         }
                     } catch (Exception e) {
