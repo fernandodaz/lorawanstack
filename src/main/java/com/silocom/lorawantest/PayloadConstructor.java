@@ -30,7 +30,7 @@ public class PayloadConstructor {
     public String JoinAccept(int appNonce, boolean imme, long tmst, float freq, int rfch, int powe, String modu,
             String datr, String codr, boolean ipol, int size, boolean ncrc, byte[] appKey) {  //falta pasar APPEUI,DevEUI, APPKEY
 
-        byte mhdr = 0x20;
+        byte MHDR = 0x20;
 
         byte[] AppNonce = new byte[3];
         AppNonce[2] = (byte) (appNonce & 0xFF);
@@ -48,11 +48,12 @@ public class PayloadConstructor {
         DevAddr[2] = 0x00;
         DevAddr[3] = 0x01;
 
+        
         byte DLSetting = 2;
 
         byte RxDelay = 1;
 
-        byte[] mic = Mic.calculateMicJoinResponse(mhdr, AppNonce, NetID, DevAddr, DLSetting, RxDelay, null, appKey);
+        byte[] mic = Mic.calculateMicJoinResponse(MHDR, AppNonce, NetID, DevAddr, DLSetting, RxDelay, null, appKey);
 
         byte[] message = new byte[16];
 
@@ -80,7 +81,7 @@ public class PayloadConstructor {
             byte[] buffer = cipher.update(message, 0, message.length);
             message = new byte[buffer.length + 1];
             System.arraycopy(buffer, 0, message, 1, buffer.length);
-            message[0] = mhdr;
+            message[0] = MHDR;
 
             decodeJoinAccept(message, appKey);
 

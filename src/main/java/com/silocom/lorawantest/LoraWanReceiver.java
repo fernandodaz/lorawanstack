@@ -26,7 +26,7 @@ import java.util.Random;
  *
  * @author hvarona
  */
-public class LoraWanReceiver /*implements MessageListener*/ {
+public class LoraWanReceiver {
 
     String data = null;
     int rssi = 0;
@@ -75,8 +75,6 @@ public class LoraWanReceiver /*implements MessageListener*/ {
 
     public void ReceiveMessage(byte[] messageComplete, String message, boolean imme, long tmst, float freq, int rfch, int powe,
             String modu, String datr, String codr, boolean ipol, int size, boolean ncrc) {
-        // System.out.println("decode message");
-        //Definir variables globales existentes, como locales
 
         byte[] decodeMessage = Base64.decodeBase64(message);
         int mType = decodeMessage[0] & 0xFF;
@@ -128,7 +126,6 @@ public class LoraWanReceiver /*implements MessageListener*/ {
                 decodeMACPayload(message);
                 String string2 = new String(messageComplete);
                 System.out.println("Data up: " + string2);
-              
 
         }
 
@@ -201,7 +198,7 @@ public class LoraWanReceiver /*implements MessageListener*/ {
             IvParameterSpec ivParameterSpec = new IvParameterSpec(ivKey);
 
             cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, ivParameterSpec);
-            
+
             return new String(cipher.doFinal(payload));
         } catch (InvalidAlgorithmParameterException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException ex) {
         }
