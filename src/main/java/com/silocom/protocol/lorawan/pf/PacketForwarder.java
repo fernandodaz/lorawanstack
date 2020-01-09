@@ -23,7 +23,8 @@ public class PacketForwarder implements MessageListener {
     private LoraWanReceiver receiver;
 
     Connection con;
-
+     
+    long offsetInMs = 6000000;
     String data = null;
     int rssi = 0;
     int rfch = 0;
@@ -80,18 +81,11 @@ public class PacketForwarder implements MessageListener {
                                 codr = gsonObj.get("codr").getAsString();
                                 modu = gsonObj.get("modu").getAsString();
                                 tmst = gsonObj.get("tmst").getAsLong();
-                                freq = gsonObj.get("freq").getAsFloat();
+                                freq = (float) 923.2;
 
                             }
-                            /* System.out.print(" data: " + data);
-                            System.out.print(" rfch: " + rfch);
-                            System.out.print(" datr: " + datr);
-                            System.out.print(" codr: " + codr);
-                            System.out.print(" modu: " + modu);
-                            System.out.print(" tmst: " + tmst);
-                            System.out.print(" size: " + size);*/
-                            // 
-                            receiver.ReceiveMessage(message, data, false, tmst + 6000000, freq, rfch, 14, modu, datr, codr, true, size, true); //funcion que envia mensaje para ver de que tipo es 
+                                                  //Mensaje, data, Imme, Tmst,               freq, rfch, pow,modu, datr, codr, ipol, size, ncrc
+                            receiver.ReceiveMessage(message, data, false, tmst + offsetInMs, freq, rfch, 14, modu, datr, codr, true, size, true); //funcion que envia mensaje para ver de que tipo es 
 
                         }
                     } catch (Exception e) {
@@ -107,11 +101,12 @@ public class PacketForwarder implements MessageListener {
             case 2:  //Mantiene la sesion udp activa con el gateway,
 
                
-                int tokenPull = message[1] & 0xFF
+                int tokenPull = message[1] & 0xFF    
                         | (message[2] & 0xFF) << 8;
 
                 pullAckPacket(tokenPull);
-                if (sendBuffer.length > 0) {
+                
+                if (sendBuffer.length > 0) {       //ventana de tiempo de respuesta después de recibir petición de ACK
                     con.sendMessage(sendBuffer);
                     sendBuffer = new byte[0];
                 } 
@@ -184,7 +179,6 @@ public class PacketForwarder implements MessageListener {
         mesgToSend[2] = token[1];
         mesgToSend[3] = 0x03;
         System.arraycopy(data, 0, mesgToSend, 4, data.length);
-        //con.sendMessage(mesgToSend);
         sendBuffer = mesgToSend;
         String string = new String(mesgToSend);
         System.out.println(" Join accept: " + string);

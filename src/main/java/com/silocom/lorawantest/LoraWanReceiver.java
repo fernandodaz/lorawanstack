@@ -21,14 +21,12 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import org.apache.commons.codec.binary.Base64;
 import java.util.Random;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
  * @author hvarona
  */
-public class LoraWanReceiver /*implements MessageListener*/ {
+public class LoraWanReceiver {
 
     String data = null;
     int rssi = 0;
@@ -77,8 +75,6 @@ public class LoraWanReceiver /*implements MessageListener*/ {
 
     public void ReceiveMessage(byte[] messageComplete, String message, boolean imme, long tmst, float freq, int rfch, int powe,
             String modu, String datr, String codr, boolean ipol, int size, boolean ncrc) {
-        // System.out.println("decode message");
-        //Definir variables globales existentes, como locales
 
         byte[] decodeMessage = Base64.decodeBase64(message);
         int mType = decodeMessage[0] & 0xFF;
@@ -162,7 +158,9 @@ public class LoraWanReceiver /*implements MessageListener*/ {
                 | (decodeMessage[17] & 0xFF) << 8;
 
         int appNonce = rand.nextInt(0x100000) + 0xEFFFFF;
-        
+        System.out.println(" appnonce: " + Integer.toHexString(appNonce));
+        System.out.println(" devNonce: " + Integer.toHexString(devNonce));
+
         this.pForwarder.sendMessage(Sender.JoinAccept(appNonce, imme, tmst, freq, rfch, powe, modu, datr, codr, ipol, size, ncrc, appKey));
 
     }
@@ -226,8 +224,7 @@ public class LoraWanReceiver /*implements MessageListener*/ {
             toKey[7] = (byte) (DevNonce & 0xff);
             toKey[8] = (byte) ((DevNonce >> 8) & 0xff);
             return ciph.update(toKey);
-        } catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException ex) {
-            Logger.getLogger(LoraWanReceiver.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException ignore) {
         }
         return null;
     }
@@ -249,8 +246,7 @@ public class LoraWanReceiver /*implements MessageListener*/ {
             toKey[7] = (byte) (DevNonce & 0xff);
             toKey[8] = (byte) ((DevNonce >> 8) & 0xff);
             return ciph.update(toKey);
-        } catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException ex) {
-            Logger.getLogger(LoraWanReceiver.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException ignore) {
         }
         return null;
     }
