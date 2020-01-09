@@ -7,6 +7,7 @@ import com.google.gson.JsonParser;
 import com.silocom.m2m.layer.physical.Connection;
 import com.silocom.m2m.layer.physical.MessageListener;
 import com.silocom.protocol.lorawan.pf.PacketForwarder;
+import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -52,8 +53,8 @@ public class LoraWanReceiver {
     final int RFU = 0x06;
     final int propietary = 0x07;
 
-    private final byte[] nwSKey;
-    private final byte[] appSKey;
+    private byte[] nwSKey;
+    private byte[] appSKey;
     private final byte[] appKey;
 
     private final Cipher cipher;
@@ -78,6 +79,8 @@ public class LoraWanReceiver {
 
         byte[] decodeMessage = Base64.decodeBase64(message);
         int mType = decodeMessage[0] & 0xFF;
+
+        sensorDecoder(message);
 
         switch (mType) {
 
@@ -161,11 +164,25 @@ public class LoraWanReceiver {
         System.out.println(" appnonce: " + Integer.toHexString(appNonce));
         System.out.println(" devNonce: " + Integer.toHexString(devNonce));
 
+        appSKey = deriveAppSKey(appNonce, 0x010001, devNonce);
+        nwSKey = deriveNwSKey(appNonce, 0x010001, devNonce);
+
         this.pForwarder.sendMessage(Sender.JoinAccept(appNonce, imme, tmst, freq, rfch, powe, modu, datr, codr, ipol, size, ncrc, appKey));
 
     }
 
-    public String decodeMACPayload(String message) {
+    public void sensorDecoder(String message) {
+        
+      byte[] rawData = new byte[11];
+        
+      rawData = decodeMACPayload(message);
+      
+      System.out.println(" rawdata: " + Utils.hexToString(rawData));
+      
+            
+    }
+
+    public byte[] decodeMACPayload(String message) {
         byte[] decodeMessage = Base64.decodeBase64(message);
         // System.out.println("Message Decoded: " + Utils.hexToString(decodeMessage));
         int mType = decodeMessage[0] & 0xFF;
@@ -178,10 +195,10 @@ public class LoraWanReceiver {
 
         byte[] payload = new byte[decodeMessage.length - 9];
         System.arraycopy(decodeMessage, 9, payload, 0, decodeMessage.length - 9);
-        return decryptPayload(payload, devAddress, fCount, (byte) 0).substring(0, payload.length - 4);
+        return decryptPayload(payload, devAddress, fCount, (byte) 0);
     }
 
-    public String decryptPayload(byte[] payload, int devAddress, int fCount, byte dir) {
+    public byte[] decryptPayload(byte[] payload, int devAddress, int fCount, byte dir) {
         try {
             byte[] ivKey = new byte[16];
             Arrays.fill(ivKey, (byte) 0);
@@ -201,7 +218,7 @@ public class LoraWanReceiver {
 
             cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, ivParameterSpec);
 
-            return new String(cipher.doFinal(payload));
+            return cipher.doFinal(payload);
         } catch (InvalidAlgorithmParameterException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException ex) {
         }
         return null;
