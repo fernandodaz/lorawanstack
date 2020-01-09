@@ -81,7 +81,7 @@ public class PacketForwarder implements MessageListener {
                                 codr = gsonObj.get("codr").getAsString();
                                 modu = gsonObj.get("modu").getAsString();
                                 tmst = gsonObj.get("tmst").getAsLong();
-                                freq = gsonObj.get("freq").getAsFloat();
+                                freq = (float) 923.2;
 
                             }
                                                   //Mensaje, data, Imme, Tmst,               freq, rfch, pow,modu, datr, codr, ipol, size, ncrc

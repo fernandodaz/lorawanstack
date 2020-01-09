@@ -158,6 +158,9 @@ public class LoraWanReceiver {
                 | (decodeMessage[17] & 0xFF) << 8;
 
         int appNonce = rand.nextInt(0x100000) + 0xEFFFFF;
+        System.out.println(" appnonce: " + Integer.toHexString(appNonce));
+        System.out.println(" devNonce: " + Integer.toHexString(devNonce));
+        
 
         this.pForwarder.sendMessage(Sender.JoinAccept(appNonce, imme, tmst, freq, rfch, powe, modu, datr, codr, ipol, size, ncrc, appKey));
 
