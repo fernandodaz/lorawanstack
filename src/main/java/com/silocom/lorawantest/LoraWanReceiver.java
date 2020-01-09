@@ -21,6 +21,8 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import org.apache.commons.codec.binary.Base64;
 import java.util.Random;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -128,7 +130,6 @@ public class LoraWanReceiver /*implements MessageListener*/ {
                 decodeMACPayload(message);
                 String string2 = new String(messageComplete);
                 System.out.println("Data up: " + string2);
-              
 
         }
 
@@ -161,7 +162,7 @@ public class LoraWanReceiver /*implements MessageListener*/ {
                 | (decodeMessage[17] & 0xFF) << 8;
 
         int appNonce = rand.nextInt(0x100000) + 0xEFFFFF;
-
+        
         this.pForwarder.sendMessage(Sender.JoinAccept(appNonce, imme, tmst, freq, rfch, powe, modu, datr, codr, ipol, size, ncrc, appKey));
 
     }
@@ -201,9 +202,55 @@ public class LoraWanReceiver /*implements MessageListener*/ {
             IvParameterSpec ivParameterSpec = new IvParameterSpec(ivKey);
 
             cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, ivParameterSpec);
-            
+
             return new String(cipher.doFinal(payload));
         } catch (InvalidAlgorithmParameterException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException ex) {
+        }
+        return null;
+    }
+
+    public byte[] deriveAppSKey(int AppNonce, int NetId, int DevNonce) {
+        try {
+            SecretKeySpec key = new SecretKeySpec(appKey, "AES");
+            Cipher ciph = Cipher.getInstance("AES/ECB/NoPadding");
+            ciph.init(Cipher.ENCRYPT_MODE, key);
+            byte[] toKey = new byte[16];
+            org.bouncycastle.util.Arrays.fill(toKey, (byte) 0);
+            toKey[0] = 0x02;
+            toKey[1] = (byte) (AppNonce & 0xff);
+            toKey[2] = (byte) ((AppNonce >> 8) & 0xff);
+            toKey[3] = (byte) ((AppNonce >> 16) & 0xff);
+            toKey[4] = (byte) (NetId & 0xff);
+            toKey[5] = (byte) ((NetId >> 8) & 0xff);
+            toKey[6] = (byte) ((NetId >> 16) & 0xff);
+            toKey[7] = (byte) (DevNonce & 0xff);
+            toKey[8] = (byte) ((DevNonce >> 8) & 0xff);
+            return ciph.update(toKey);
+        } catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException ex) {
+            Logger.getLogger(LoraWanReceiver.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
+    }
+
+    public byte[] deriveNwSKey(int AppNonce, int NetId, int DevNonce) {
+        try {
+            SecretKeySpec key = new SecretKeySpec(appKey, "AES");
+            Cipher ciph = Cipher.getInstance("AES/ECB/NoPadding");
+            ciph.init(Cipher.ENCRYPT_MODE, key);
+            byte[] toKey = new byte[16];
+            org.bouncycastle.util.Arrays.fill(toKey, (byte) 0);
+            toKey[0] = 0x01;
+            toKey[1] = (byte) (AppNonce & 0xff);
+            toKey[2] = (byte) ((AppNonce >> 8) & 0xff);
+            toKey[3] = (byte) ((AppNonce >> 16) & 0xff);
+            toKey[4] = (byte) (NetId & 0xff);
+            toKey[5] = (byte) ((NetId >> 8) & 0xff);
+            toKey[6] = (byte) ((NetId >> 16) & 0xff);
+            toKey[7] = (byte) (DevNonce & 0xff);
+            toKey[8] = (byte) ((DevNonce >> 8) & 0xff);
+            return ciph.update(toKey);
+        } catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException ex) {
+            Logger.getLogger(LoraWanReceiver.class.getName()).log(Level.SEVERE, null, ex);
         }
         return null;
     }
