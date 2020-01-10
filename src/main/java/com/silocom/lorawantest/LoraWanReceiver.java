@@ -118,7 +118,7 @@ public class LoraWanReceiver {
             default:
                 sensorDecoder(message);
                 String string2 = new String(messageComplete);
-                System.out.println("Uplink: " + string2);
+                System.out.println("Uplink data: " + string2);
 
         }
 
@@ -165,7 +165,7 @@ public class LoraWanReceiver {
 
         rawData = decodeMACPayload(message);
 
-        System.out.println(" rawdata: " + Utils.hexToString(rawData));
+        System.out.println(" Payload received: " + Utils.hexToString(rawData));
 
         int batVal = ((rawData[0] & 0x3F) << 8) | (rawData[1] & 0xFF);
         int batStat = ((((rawData[0] & 0xFF) << 8) | (rawData[1] & 0xFF)) >> 14) & 0xFF;
@@ -226,7 +226,6 @@ public class LoraWanReceiver {
 
             IvParameterSpec ivParameterSpec = new IvParameterSpec(ivKey);
 
-            System.out.println(" APPSKEY : " + Utils.hexToString(appSKey));
             SecretKeySpec secretKeySpec = new SecretKeySpec(appSKey, "AES");
             cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, ivParameterSpec);
 

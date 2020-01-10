@@ -128,7 +128,6 @@ public class PayloadConstructor {
             index++;
             byte RxDelay = srcmsg[index];
             index++;
-            System.out.println("srcmsg.length " + srcmsg.length + " " + index);
             byte[] CFList = new byte[srcmsg.length - (index + 4)];
             for (int i = CFList.length - 1; i >= 0; i--) {
                 CFList[i] = srcmsg[index];

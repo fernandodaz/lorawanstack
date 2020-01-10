@@ -114,8 +114,6 @@ public class PacketForwarder implements MessageListener {
 
             case 5:
 
-                System.out.println(" MSG RECEIVED : " + Utils.hexToString(message));
-
                 break;
 
         }
@@ -167,7 +165,7 @@ public class PacketForwarder implements MessageListener {
         System.arraycopy(data, 0, mesgToSend, 4, data.length);
         sendBuffer = mesgToSend;
         String string = new String(mesgToSend);
-        System.out.println(" DownLink: " + string);
+        System.out.println(" Join accept: " + string);
 
     }
 
