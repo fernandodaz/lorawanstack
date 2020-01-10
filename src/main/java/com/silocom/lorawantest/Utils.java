@@ -3,10 +3,6 @@
  */
 package com.silocom.lorawantest;
 
-/**
- *
- * @author silocom01
- */
 public class Utils {
 
     public static String hexToString(byte[] message) {

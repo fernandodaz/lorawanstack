@@ -3,18 +3,11 @@
  */
 package com.silocom.protocol.lorawan.pf;
 
-import com.silocom.lorawantest.JsonConstructor;
 import com.silocom.lorawantest.LoraWanReceiver;
-import com.silocom.lorawantest.PayloadConstructor;
 import com.silocom.lorawantest.Sensor;
 import com.silocom.lorawantest.SensorListener;
-import com.silocom.lorawantest.Utils;
 import com.silocom.m2m.layer.physical.PhysicalLayer;
 
-/**
- *
- * @author silocom01
- */
 public class Main {
 
     public static void main(String args[]) throws Exception {
