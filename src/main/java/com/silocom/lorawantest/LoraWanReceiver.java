@@ -43,7 +43,7 @@ public class LoraWanReceiver {
     PayloadConstructor Sender;
     JsonConstructor jsonCons;
     PacketForwarder pForwarder;
-
+    
     final int joinRequest = 0x00;      //Secuencia dada por el documento de LoRaWAN Alliance
     final int joinAccept = 0x01;
     final int unconfirmedDataUp = 0x02;
@@ -58,12 +58,13 @@ public class LoraWanReceiver {
     private final byte[] appKey;
 
     private final Cipher cipher;
-
+    private final SensorListener listener;
     private final Random rand = new Random();
     private final JsonParser parser = new JsonParser();
 
-    public LoraWanReceiver(byte[] nwSKey, byte[] appSKey, byte[] appKey, PacketForwarder pf) throws NoSuchAlgorithmException, NoSuchPaddingException {
+    public LoraWanReceiver(byte[] nwSKey, byte[] appSKey, byte[] appKey, PacketForwarder pf, SensorListener listener) throws NoSuchAlgorithmException, NoSuchPaddingException {
         this.cipher = Cipher.getInstance("AES/CTR/PKCS5Padding");
+        this.listener = listener;
         this.nwSKey = nwSKey;
         this.appSKey = appSKey;
         this.appKey = appKey;
@@ -171,7 +172,7 @@ public class LoraWanReceiver {
     }
 
     public void sensorDecoder(String message) {
-
+        
         byte[] rawData = new byte[11];
 
         rawData = decodeMACPayload(message);
@@ -199,6 +200,9 @@ public class LoraWanReceiver {
         System.out.println(" tempBuiltIn : " + tempBuiltIn);
         System.out.println(" Hum : " + Hum);
         System.out.println(" tempExt : " + tempExt);
+        
+        Sensor sensor = new Sensor(batVal, batStat, tempBuiltIn, Hum, tempExt);
+        listener.onData(sensor);
     }
 
     public byte[] decodeMACPayload(String message) {

@@ -6,6 +6,8 @@ package com.silocom.protocol.lorawan.pf;
 import com.silocom.lorawantest.JsonConstructor;
 import com.silocom.lorawantest.LoraWanReceiver;
 import com.silocom.lorawantest.PayloadConstructor;
+import com.silocom.lorawantest.Sensor;
+import com.silocom.lorawantest.SensorListener;
 import com.silocom.lorawantest.Utils;
 import com.silocom.m2m.layer.physical.PhysicalLayer;
 
@@ -19,7 +21,13 @@ public class Main {
 
         com.silocom.m2m.layer.physical.Connection con = PhysicalLayer.addConnection(PhysicalLayer.UDPCALLBACK, 1700, "192.168.2.69");
         PacketForwarder rec = new PacketForwarder(con);
-        LoraWanReceiver LoraWan = new LoraWanReceiver(nwSKey, appSKey, appKey, rec);
+        LoraWanReceiver LoraWan = new LoraWanReceiver(nwSKey, appSKey, appKey, rec, new SensorListener() {
+            @Override
+            public void onData(Sensor sensor) {
+                System.out.println(" temp ");
+            }
+        });
+        
         rec.setReceiver(LoraWan);
         con.addListener(rec);
     }
