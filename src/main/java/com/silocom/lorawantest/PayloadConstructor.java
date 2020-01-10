@@ -141,7 +141,7 @@ public class PayloadConstructor {
             }
 
             byte[] mic = new byte[4];
-            System.arraycopy(srcmsg, srcmsg.length - 4, mic, 0, 4);
+           /* System.arraycopy(srcmsg, srcmsg.length - 4, mic, 0, 4);
             System.out.println("MSG : " + Utils.hexToString(message));
             System.out.println("MHDR : " + Integer.toHexString(MHDR));
             System.out.println("AppNonce : " + Utils.hexToString(AppNonce));
@@ -150,7 +150,7 @@ public class PayloadConstructor {
             System.out.println("DLSetting : " + Integer.toHexString(DLSetting));
             System.out.println("RxDelay : " + Integer.toHexString(RxDelay));
             System.out.println("CFList : " + Utils.hexToString(CFList));
-            System.out.println("Mic : " + Utils.hexToString(mic));
+            System.out.println("Mic : " + Utils.hexToString(mic));*/
             return new JoinAcceptMessage(MHDR, AppNonce, NetID, DevAddr, DLSetting, RxDelay, mic);
         } catch (NoSuchAlgorithmException ex) {
             Logger.getLogger(PayloadConstructor.class.getName()).log(Level.SEVERE, null, ex);

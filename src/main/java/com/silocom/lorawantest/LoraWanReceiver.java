@@ -59,7 +59,6 @@ public class LoraWanReceiver {
 
     private final Cipher cipher;
 
-    private final SecretKeySpec secretKeySpec;
     private final Random rand = new Random();
     private final JsonParser parser = new JsonParser();
 
@@ -71,7 +70,7 @@ public class LoraWanReceiver {
         this.pForwarder = pf;
         this.jsonCons = new JsonConstructor();
         this.Sender = new PayloadConstructor(jsonCons);
-        secretKeySpec = new SecretKeySpec(appSKey, "AES");
+
     }
 
     public void ReceiveMessage(byte[] messageComplete, String message, boolean imme, long tmst, float freq, int rfch, int powe,
@@ -79,8 +78,6 @@ public class LoraWanReceiver {
 
         byte[] decodeMessage = Base64.decodeBase64(message);
         int mType = decodeMessage[0] & 0xFF;
-
-        sensorDecoder(message);
 
         switch (mType) {
 
@@ -126,7 +123,7 @@ public class LoraWanReceiver {
                 break;
 
             default:
-                decodeMACPayload(message);
+                sensorDecoder(message);
                 String string2 = new String(messageComplete);
                 System.out.println("Data up: " + string2);
 
@@ -157,29 +154,51 @@ public class LoraWanReceiver {
                 | (decodeMessage[15] & (long) 0xFF) << 48
                 | (decodeMessage[16] & (long) 0xFF) << 56;
 
-        int devNonce = (decodeMessage[18] & 0xFF)
-                | (decodeMessage[17] & 0xFF) << 8;
+        int devNonce = (decodeMessage[17] & 0xFF)
+                | (decodeMessage[18] & 0xFF) << 8;
 
         int appNonce = rand.nextInt(0x100000) + 0xEFFFFF;
-        System.out.println(" appnonce: " + Integer.toHexString(appNonce));
-        System.out.println(" devNonce: " + Integer.toHexString(devNonce));
 
+        /* System.out.println(" appnonce: " + Integer.toHexString(appNonce));
+        System.out.println(" devNonce: " + Integer.toHexString(devNonce));*/
         appSKey = deriveAppSKey(appNonce, 0x010001, devNonce);
         nwSKey = deriveNwSKey(appNonce, 0x010001, devNonce);
 
+        /* System.out.println(" appSkey : " + Utils.hexToString(appSKey));
+        System.out.println(" nwSkey : " + Utils.hexToString(nwSKey));*/
         this.pForwarder.sendMessage(Sender.JoinAccept(appNonce, imme, tmst, freq, rfch, powe, modu, datr, codr, ipol, size, ncrc, appKey));
 
     }
 
     public void sensorDecoder(String message) {
+
+        byte[] rawData = new byte[11];
+
+        rawData = decodeMACPayload(message);
+
+        System.out.println(" rawdata: " + Utils.hexToString(rawData));
         
-      byte[] rawData = new byte[11];
-        
-      rawData = decodeMACPayload(message);
-      
-      System.out.println(" rawdata: " + Utils.hexToString(rawData));
-      
-            
+        int batVal = ((rawData[0] & 0x3F) << 8) | (rawData[1] & 0xFF);
+        int batStat = ((((rawData[0] & 0xFF) << 8) | (rawData[1] & 0xFF)) >> 14) & 0xFF;
+        int tempBuiltInVal = (((rawData[2] & 0xFF) << 8) | (rawData[3] & 0xFF));
+
+        if ((rawData[2] & 0x80) > 0) {
+            tempBuiltInVal |= 0xFFFF0000;
+        }
+        int tempBuiltIn = tempBuiltInVal;
+        int Hum = (((rawData[4] & 0xFF) << 8) | (rawData[5] & 0xFF));
+
+        int tempExtVal = (((rawData[7] & 0xFF) << 8) | (rawData[8] & 0xFF));
+        if ((rawData[7] & 0x80) > 0) {
+            tempExtVal |= 0xFFFF0000;
+        }
+        int tempExt = tempExtVal; //DS18B20,
+
+        System.out.println(" batVal : " + batVal);
+        System.out.println(" batStat : " + batStat);
+        System.out.println(" tempBuiltIn : " + tempBuiltIn);
+        System.out.println(" Hum : " + Hum);
+        System.out.println(" tempExt : " + tempExt);
     }
 
     public byte[] decodeMACPayload(String message) {
@@ -216,6 +235,8 @@ public class LoraWanReceiver {
 
             IvParameterSpec ivParameterSpec = new IvParameterSpec(ivKey);
 
+            System.out.println(" APPSKEY : " + Utils.hexToString(appSKey));
+            SecretKeySpec secretKeySpec = new SecretKeySpec(appSKey, "AES");
             cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, ivParameterSpec);
 
             return cipher.doFinal(payload);
@@ -225,6 +246,7 @@ public class LoraWanReceiver {
     }
 
     public byte[] deriveAppSKey(int AppNonce, int NetId, int DevNonce) {
+
         try {
             SecretKeySpec key = new SecretKeySpec(appKey, "AES");
             Cipher ciph = Cipher.getInstance("AES/ECB/NoPadding");
