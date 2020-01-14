@@ -15,9 +15,6 @@ public class JsonConstructor {
         JsonMessage jsonObject = new JsonMessage(imme, tmst, freq, rfch, powe, modu, datr, codr, ipol, size, ncrc, data);  //Construye un objeto y envia como parametros los datos necesarios a la clase JsonMessage para poder construir el Json     
         FinalJson finalJsonToSend = new FinalJson(jsonObject);
         String finaljsonToSend = gson.toJson(finalJsonToSend);
-        //
-
-        //System.out.println(" Join Accept > " + finaljsonToSend);
         return finaljsonToSend;
     }
 

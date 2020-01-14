@@ -12,10 +12,6 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
 import org.apache.commons.codec.binary.Base64;
 
-/**
- *
- * @author silocom01
- */
 public class PayloadConstructor {
 
     String payloadB64 = null;
@@ -48,7 +44,6 @@ public class PayloadConstructor {
         DevAddr[2] = 0x00;
         DevAddr[3] = 0x01;
 
-        
         byte DLSetting = 2;
 
         byte RxDelay = 1;
@@ -133,7 +128,6 @@ public class PayloadConstructor {
             index++;
             byte RxDelay = srcmsg[index];
             index++;
-            System.out.println("srcmsg.length " + srcmsg.length + " " + index);
             byte[] CFList = new byte[srcmsg.length - (index + 4)];
             for (int i = CFList.length - 1; i >= 0; i--) {
                 CFList[i] = srcmsg[index];
@@ -141,17 +135,8 @@ public class PayloadConstructor {
             }
 
             byte[] mic = new byte[4];
-           /* System.arraycopy(srcmsg, srcmsg.length - 4, mic, 0, 4);
-            System.out.println("MSG : " + Utils.hexToString(message));
-            System.out.println("MHDR : " + Integer.toHexString(MHDR));
-            System.out.println("AppNonce : " + Utils.hexToString(AppNonce));
-            System.out.println("NetId : " + Utils.hexToString(NetID));
-            System.out.println("DevAddr : " + Utils.hexToString(DevAddr));
-            System.out.println("DLSetting : " + Integer.toHexString(DLSetting));
-            System.out.println("RxDelay : " + Integer.toHexString(RxDelay));
-            System.out.println("CFList : " + Utils.hexToString(CFList));
-            System.out.println("Mic : " + Utils.hexToString(mic));*/
             return new JoinAcceptMessage(MHDR, AppNonce, NetID, DevAddr, DLSetting, RxDelay, mic);
+            
         } catch (NoSuchAlgorithmException ex) {
             Logger.getLogger(PayloadConstructor.class.getName()).log(Level.SEVERE, null, ex);
         } catch (NoSuchPaddingException ex) {

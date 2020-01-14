@@ -5,8 +5,6 @@ package com.silocom.protocol.lorawan.pf;
 
 import com.silocom.m2m.layer.physical.Connection;
 import com.silocom.m2m.layer.physical.MessageListener;
-import java.util.Arrays;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -14,16 +12,12 @@ import com.silocom.lorawantest.LoraWanReceiver;
 import com.silocom.lorawantest.Utils;
 import java.util.Random;
 
-/**
- *
- * @author silocom01
- */
 public class PacketForwarder implements MessageListener {
 
     private LoraWanReceiver receiver;
 
     Connection con;
-     
+
     long offsetInMs = 6000000;
     String data = null;
     int rssi = 0;
@@ -65,15 +59,13 @@ public class PacketForwarder implements MessageListener {
                         byte[] mesgWithoutGarbage = new byte[message.length - 12];
                         System.arraycopy(message, 12, mesgWithoutGarbage, 0, mesgWithoutGarbage.length);
                         String jsonMessage = new String(mesgWithoutGarbage);
-                        //System.out.println(jsonMessage);
 
                         JsonObject gsonArr = parser.parse(jsonMessage).getAsJsonObject();
                         if (gsonArr.get("rxpk") != null) {
                             for (JsonElement obj : gsonArr.get("rxpk").getAsJsonArray()) {
 
-                                // Object of array
                                 JsonObject gsonObj = obj.getAsJsonObject();
-                                // Primitives elements of object
+
                                 data = gsonObj.get("data").getAsString();
                                 rfch = gsonObj.get("rfch").getAsInt();
                                 size = gsonObj.get("size").getAsInt();
@@ -84,7 +76,7 @@ public class PacketForwarder implements MessageListener {
                                 freq = (float) 923.2;
 
                             }
-                                                  //Mensaje, data, Imme, Tmst,               freq, rfch, pow,modu, datr, codr, ipol, size, ncrc
+                            //Mensaje, data, Imme, Tmst,               freq, rfch, pow,modu, datr, codr, ipol, size, ncrc
                             receiver.ReceiveMessage(message, data, false, tmst + offsetInMs, freq, rfch, 14, modu, datr, codr, true, size, true); //funcion que envia mensaje para ver de que tipo es 
 
                         }
@@ -100,16 +92,15 @@ public class PacketForwarder implements MessageListener {
 
             case 2:  //Mantiene la sesion udp activa con el gateway,
 
-               
-                int tokenPull = message[1] & 0xFF    
+                int tokenPull = message[1] & 0xFF
                         | (message[2] & 0xFF) << 8;
 
                 pullAckPacket(tokenPull);
-                
+
                 if (sendBuffer.length > 0) {       //ventana de tiempo de respuesta después de recibir petición de ACK
                     con.sendMessage(sendBuffer);
                     sendBuffer = new byte[0];
-                } 
+                }
 
                 break;
 
@@ -120,18 +111,12 @@ public class PacketForwarder implements MessageListener {
             case 4:
 
                 break;
-            
+
             case 5:
 
-                System.out.println(" MSG RECEIVED : " + Utils.hexToString(message));
-                
-                
                 break;
 
         }
-
-        System.out.println(" - packetType " + Long.toHexString(packetType));
-
     }
 
     public void pushDataPacket() {
@@ -171,8 +156,7 @@ public class PacketForwarder implements MessageListener {
         byte[] data = JsonTxpk.getBytes();
         byte[] token = new byte[2];
         new Random().nextBytes(token);
-
-        //System.out.println( JsonTxpk);
+        
         byte[] mesgToSend = new byte[4 + data.length];
         mesgToSend[0] = 0x02;
         mesgToSend[1] = token[0];

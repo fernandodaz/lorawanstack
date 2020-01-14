@@ -1,19 +1,11 @@
 package com.silocom.lorawantest;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.silocom.m2m.layer.physical.Connection;
-import com.silocom.m2m.layer.physical.MessageListener;
 import com.silocom.protocol.lorawan.pf.PacketForwarder;
-import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
@@ -43,7 +35,7 @@ public class LoraWanReceiver {
     PayloadConstructor Sender;
     JsonConstructor jsonCons;
     PacketForwarder pForwarder;
-    
+
     final int joinRequest = 0x00;      //Secuencia dada por el documento de LoRaWAN Alliance
     final int joinAccept = 0x01;
     final int unconfirmedDataUp = 0x02;
@@ -126,7 +118,7 @@ public class LoraWanReceiver {
             default:
                 sensorDecoder(message);
                 String string2 = new String(messageComplete);
-                System.out.println("Data up: " + string2);
+                System.out.println("Uplink data: " + string2);
 
         }
 
@@ -160,25 +152,21 @@ public class LoraWanReceiver {
 
         int appNonce = rand.nextInt(0x100000) + 0xEFFFFF;
 
-        /* System.out.println(" appnonce: " + Integer.toHexString(appNonce));
-        System.out.println(" devNonce: " + Integer.toHexString(devNonce));*/
         appSKey = deriveAppSKey(appNonce, 0x010001, devNonce);
         nwSKey = deriveNwSKey(appNonce, 0x010001, devNonce);
 
-        /* System.out.println(" appSkey : " + Utils.hexToString(appSKey));
-        System.out.println(" nwSkey : " + Utils.hexToString(nwSKey));*/
         this.pForwarder.sendMessage(Sender.JoinAccept(appNonce, imme, tmst, freq, rfch, powe, modu, datr, codr, ipol, size, ncrc, appKey));
 
     }
 
     public void sensorDecoder(String message) {
-        
+
         byte[] rawData = new byte[11];
 
         rawData = decodeMACPayload(message);
 
-        System.out.println(" rawdata: " + Utils.hexToString(rawData));
-        
+        System.out.println(" Payload received: " + Utils.hexToString(rawData));
+
         int batVal = ((rawData[0] & 0x3F) << 8) | (rawData[1] & 0xFF);
         int batStat = ((((rawData[0] & 0xFF) << 8) | (rawData[1] & 0xFF)) >> 14) & 0xFF;
         int tempBuiltInVal = (((rawData[2] & 0xFF) << 8) | (rawData[3] & 0xFF));
@@ -200,14 +188,13 @@ public class LoraWanReceiver {
         System.out.println(" tempBuiltIn : " + tempBuiltIn);
         System.out.println(" Hum : " + Hum);
         System.out.println(" tempExt : " + tempExt);
-        
+
         Sensor sensor = new Sensor(batVal, batStat, tempBuiltIn, Hum, tempExt);
         listener.onData(sensor);
     }
 
     public byte[] decodeMACPayload(String message) {
         byte[] decodeMessage = Base64.decodeBase64(message);
-        // System.out.println("Message Decoded: " + Utils.hexToString(decodeMessage));
         int mType = decodeMessage[0] & 0xFF;
         int devAddress = (decodeMessage[1] & 0xff)
                 | (decodeMessage[2] & 0xff) << 8
@@ -239,7 +226,6 @@ public class LoraWanReceiver {
 
             IvParameterSpec ivParameterSpec = new IvParameterSpec(ivKey);
 
-            System.out.println(" APPSKEY : " + Utils.hexToString(appSKey));
             SecretKeySpec secretKeySpec = new SecretKeySpec(appSKey, "AES");
             cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, ivParameterSpec);
 
@@ -293,9 +279,4 @@ public class LoraWanReceiver {
         }
         return null;
     }
-
-    /* @Override
-    public void receiveMessage(byte[] message, Connection con) {
-        //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }*/
 }
