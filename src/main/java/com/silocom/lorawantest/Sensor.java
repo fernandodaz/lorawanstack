@@ -10,12 +10,24 @@ public class Sensor {
     int tempBuiltIn;
     int hum;
     int tempExt;
+    int rssi;
+    String time;
 
-    public Sensor(int batVal, int batStat, int tempBuiltIn, int hum, int tempExt) {
+    public Sensor(int batVal, int batStat, int tempBuiltIn, int hum, int tempExt, int rssi, String time) {
         this.batVal = batVal;
         this.tempBuiltIn = tempBuiltIn;
         this.hum = hum;
         this.tempExt = tempExt;
+        this.rssi = rssi;
+        this.time = time;
+    }
+
+    public String getTime() {
+        return time;
+    }
+
+    public int getRssi() {
+        return rssi;
     }
 
     public int getBatVal() {
@@ -58,4 +70,11 @@ public class Sensor {
         this.tempExt = tempExt;
     }
 
+    public void setRssi(int rssi) {
+        this.rssi = rssi;
+    }
+
+    public void setTime(String time) {
+        this.time = time;
+    }
 }

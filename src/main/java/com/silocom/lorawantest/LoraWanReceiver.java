@@ -67,7 +67,7 @@ public class LoraWanReceiver {
     }
 
     public void ReceiveMessage(byte[] messageComplete, String message, boolean imme, long tmst, float freq, int rfch, int powe,
-            String modu, String datr, String codr, boolean ipol, int size, boolean ncrc) {
+            String modu, String datr, String codr, boolean ipol, int size, boolean ncrc, int rssi, String time) {
 
         byte[] decodeMessage = Base64.decodeBase64(message);
         int mType = decodeMessage[0] & 0xFF;
@@ -116,7 +116,7 @@ public class LoraWanReceiver {
                 break;
 
             default:
-                sensorDecoder(message);
+                sensorDecoder(message, rssi, time);
                 String string2 = new String(messageComplete);
                 System.out.println("Uplink data: " + string2);
 
@@ -138,7 +138,7 @@ public class LoraWanReceiver {
                 | (decodeMessage[7] & (long) 0xFF) << 48
                 | (decodeMessage[8] & (long) 0xFF) << 56;
 
-        long devAddr = (decodeMessage[9] & 0xFF)
+        long devEUI = (decodeMessage[9] & 0xFF)
                 | (decodeMessage[10] & (long) 0xFF) << 8
                 | (decodeMessage[11] & (long) 0xFF) << 16
                 | (decodeMessage[12] & (long) 0xFF) << 24
@@ -159,7 +159,7 @@ public class LoraWanReceiver {
 
     }
 
-    public void sensorDecoder(String message) {
+    public void sensorDecoder(String message, int rssi, String time) {
 
         byte[] rawData = new byte[11];
 
@@ -188,8 +188,10 @@ public class LoraWanReceiver {
         System.out.println(" tempBuiltIn : " + tempBuiltIn);
         System.out.println(" Hum : " + Hum);
         System.out.println(" tempExt : " + tempExt);
+        
+                                                                           
 
-        Sensor sensor = new Sensor(batVal, batStat, tempBuiltIn, Hum, tempExt);
+        Sensor sensor = new Sensor(batVal, batStat, tempBuiltIn, Hum, tempExt, rssi, time);
         listener.onData(sensor);
     }
 
