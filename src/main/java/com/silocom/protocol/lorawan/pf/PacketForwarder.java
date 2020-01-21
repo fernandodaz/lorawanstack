@@ -41,6 +41,7 @@ public class PacketForwarder implements MessageListener {
         this.receiver = receiver;
     }
 
+    @Override
     public void receiveMessage(byte[] message) {
 
         String mesg = new String(message);
@@ -168,8 +169,8 @@ public class PacketForwarder implements MessageListener {
         mesgToSend[3] = 0x03;
         System.arraycopy(data, 0, mesgToSend, 4, data.length);
         sendBuffer = mesgToSend;
-        String string = new String(mesgToSend);
-        System.out.println(" Join accept: " + string);
+        //String string = new String(mesgToSend);
+        //System.out.println(" Join accept: " + string);
 
     }
 

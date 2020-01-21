@@ -57,8 +57,10 @@ public class LoraWanReceiver {
     public LoraWanReceiver(byte[] nwSKey, byte[] appSKey, byte[] appKey, PacketForwarder pf, SensorListener listener) throws NoSuchAlgorithmException, NoSuchPaddingException {
         this.cipher = Cipher.getInstance("AES/CTR/PKCS5Padding");
         this.listener = listener;
-        this.nwSKey = nwSKey;
-        this.appSKey = appSKey;
+        //this.nwSKey = nwSKey;
+        //this.appSKey = appSKey;
+        this.nwSKey = null;
+        this.appSKey = null;
         this.appKey = appKey;
         this.pForwarder = pf;
         this.jsonCons = new JsonConstructor();
@@ -77,7 +79,7 @@ public class LoraWanReceiver {
             case joinRequest:
 
                 String string = new String(messageComplete);
-                System.out.println(" Join Request: " + string);
+                //System.out.println(" Join Request: " + string);
 
                 decodeJoinRequest(message, imme, tmst, freq, rfch, powe, modu, datr, codr, ipol, size, ncrc, appKey);
                 break;
@@ -116,9 +118,11 @@ public class LoraWanReceiver {
                 break;
 
             default:
-                sensorDecoder(message, rssi, time);
-                String string2 = new String(messageComplete);
-                System.out.println("Uplink data: " + string2);
+                if (appSKey != null && nwSKey != null) {
+                    sensorDecoder(message, rssi, time);
+                    //String string2 = new String(messageComplete);
+                    //System.out.println("Uplink data: " + string2);
+                }
 
         }
 
@@ -165,8 +169,7 @@ public class LoraWanReceiver {
 
         rawData = decodeMACPayload(message);
 
-        System.out.println(" Payload received: " + Utils.hexToString(rawData));
-
+        //System.out.println(" Payload received: " + Utils.hexToString(rawData));
         int batVal = ((rawData[0] & 0x3F) << 8) | (rawData[1] & 0xFF);
         int batStat = ((((rawData[0] & 0xFF) << 8) | (rawData[1] & 0xFF)) >> 14) & 0xFF;
         int tempBuiltInVal = (((rawData[2] & 0xFF) << 8) | (rawData[3] & 0xFF));
@@ -183,14 +186,11 @@ public class LoraWanReceiver {
         }
         int tempExt = tempExtVal; //DS18B20,
 
-        System.out.println(" batVal : " + batVal);
+        /*System.out.println(" batVal : " + batVal);
         System.out.println(" batStat : " + batStat);
         System.out.println(" tempBuiltIn : " + tempBuiltIn);
         System.out.println(" Hum : " + Hum);
-        System.out.println(" tempExt : " + tempExt);
-        
-                                                                           
-
+        System.out.println(" tempExt : " + tempExt);*/
         Sensor sensor = new Sensor(batVal, batStat, tempBuiltIn, Hum, tempExt, rssi, time);
         listener.onData(sensor);
     }
