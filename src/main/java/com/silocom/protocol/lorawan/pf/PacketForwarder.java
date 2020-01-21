@@ -28,6 +28,7 @@ public class PacketForwarder implements MessageListener {
     String datr = null;
     String codr = null;
     String modu = null;
+    String time = null;
     private final JsonParser parser = new JsonParser();
 
     byte[] sendBuffer = new byte[0];
@@ -72,12 +73,15 @@ public class PacketForwarder implements MessageListener {
                                 datr = gsonObj.get("datr").getAsString();
                                 codr = gsonObj.get("codr").getAsString();
                                 modu = gsonObj.get("modu").getAsString();
+                                time = gsonObj.get("time").getAsString();
                                 tmst = gsonObj.get("tmst").getAsLong();
+                                rssi = gsonObj.get("rssi").getAsInt();
+                                
                                 freq = (float) 923.2;
 
                             }
                             //Mensaje, data, Imme, Tmst,               freq, rfch, pow,modu, datr, codr, ipol, size, ncrc
-                            receiver.ReceiveMessage(message, data, false, tmst + offsetInMs, freq, rfch, 14, modu, datr, codr, true, size, true); //funcion que envia mensaje para ver de que tipo es 
+                            receiver.ReceiveMessage(message, data, false, tmst + offsetInMs, freq, rfch, 14, modu, datr, codr, true, size, true, rssi, time); //funcion que envia mensaje para ver de que tipo es 
 
                         }
                     } catch (Exception e) {

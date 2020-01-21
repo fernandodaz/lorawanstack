@@ -59,6 +59,7 @@ public class JsonConstructor {
             this.size = size;
             this.ncrc = ncrc;
             this.data = data;
+            
         }
 
     }
