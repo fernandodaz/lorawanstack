@@ -14,14 +14,17 @@ public class Main {
 
         com.silocom.m2m.layer.physical.Connection con = PhysicalLayer.addConnection(PhysicalLayer.UDPCALLBACK, 1700, "192.168.2.69");
         PacketForwarder rec = new PacketForwarder(con);
-        LoraWanReceiver LoraWan = new LoraWanReceiver(nwSKey, appSKey, appKey, rec, new SensorListener() {
+
+        LoraWanReceiver LoraWan = new LoraWanReceiver(nwSKey, appSKey, appKey, netID, appEUI_N1, devEUI_N1, devAddr_N1,
+                appEUI_N2, devEUI_N2, devAddr_N2, appEUI_N3, devEUI_N3, devAddr_N3, appEUI_N4, devEUI_N4, devAddr_N4,
+                rec, new SensorListener() {
             @Override
             public void onData(Sensor sensor) {
                 System.out.println(" temp ");
             }
         });
-        
-        rec.setReceiver(LoraWan);
+
+        rec.addReceiver(LoraWan);
         con.addListener(rec);
     }
 
@@ -39,4 +42,23 @@ public class Main {
         (byte) 0x19, (byte) 0x2F, (byte) 0xBE, (byte) 0xC4, (byte) 0x27,
         (byte) 0x91, (byte) 0x63, (byte) 0x58, (byte) 0xDB, (byte) 0x6C,
         (byte) 0x1B, (byte) 0xE6, (byte) 0xFF, (byte) 0x2D, (byte) 0xDF};
+
+    private static final byte[] netID = new byte[]{(byte) 0x01, (byte) 0x00, (byte) 0x01};
+
+    private static final byte[] appEUI_N1 = new byte[]{(byte) 0x01, (byte) 0x00, (byte) 0x01};
+    private static final byte[] devEUI_N1 = new byte[]{(byte) 0x01, (byte) 0x00, (byte) 0x01};
+    private static final byte[] devAddr_N1 = new byte[]{(byte) 0x01, (byte) 0x00, (byte) 0x01};
+
+    private static final byte[] appEUI_N2 = new byte[]{(byte) 0x01, (byte) 0x00, (byte) 0x01};
+    private static final byte[] devEUI_N2 = new byte[]{(byte) 0x01, (byte) 0x00, (byte) 0x01};
+    private static final byte[] devAddr_N2 = new byte[]{(byte) 0x01, (byte) 0x00, (byte) 0x01};
+
+    private static final byte[] appEUI_N3 = new byte[]{(byte) 0x01, (byte) 0x00, (byte) 0x01};
+    private static final byte[] devEUI_N3 = new byte[]{(byte) 0x01, (byte) 0x00, (byte) 0x01};
+    private static final byte[] devAddr_N3 = new byte[]{(byte) 0x01, (byte) 0x00, (byte) 0x01};
+
+    private static final byte[] appEUI_N4 = new byte[]{(byte) 0x01, (byte) 0x00, (byte) 0x01};
+    private static final byte[] devEUI_N4 = new byte[]{(byte) 0x01, (byte) 0x00, (byte) 0x01};
+    private static final byte[] devAddr_N4 = new byte[]{(byte) 0x01, (byte) 0x00, (byte) 0x01};
+
 }

@@ -48,18 +48,57 @@ public class LoraWanReceiver {
     private byte[] nwSKey;
     private byte[] appSKey;
     private final byte[] appKey;
+    private final byte[] netID;
+
+    private final byte[] appEUI_N1;
+    private final byte[] devEUI_N1;
+    private final byte[] devAddr_N1;
+
+    private final byte[] appEUI_N2;
+    private final byte[] devEUI_N2;
+    private final byte[] devAddr_N2;
+
+    private final byte[] appEUI_N3;
+    private final byte[] devEUI_N3;
+    private final byte[] devAddr_N3;
+
+    private final byte[] appEUI_N4;
+    private final byte[] devEUI_N4;
+    private final byte[] devAddr_N4;
 
     private final Cipher cipher;
     private final SensorListener listener;
     private final Random rand = new Random();
     private final JsonParser parser = new JsonParser();
 
-    public LoraWanReceiver(byte[] nwSKey, byte[] appSKey, byte[] appKey, PacketForwarder pf, SensorListener listener) throws NoSuchAlgorithmException, NoSuchPaddingException {
+    public LoraWanReceiver(byte[] nwSKey, byte[] appSKey, byte[] appKey, byte[] netID, byte[] appEUI_N1, byte[] devEUI_N1,
+            byte[] devAddr_N1, byte[] appEUI_N2, byte[] devEUI_N2, byte[] devAddr_N2, byte[] appEUI_N3, byte[] devEUI_N3,
+            byte[] devAddr_N3, byte[] appEUI_N4, byte[] devEUI_N4, byte[] devAddr_N4, PacketForwarder pf,
+            SensorListener listener) throws NoSuchAlgorithmException, NoSuchPaddingException {
+
         this.cipher = Cipher.getInstance("AES/CTR/PKCS5Padding");
         this.listener = listener;
         this.nwSKey = nwSKey;
         this.appSKey = appSKey;
         this.appKey = appKey;
+        this.netID = netID;
+
+        this.appEUI_N1 = appEUI_N1;
+        this.devEUI_N1 = devEUI_N1;
+        this.devAddr_N1 = devAddr_N1;
+
+        this.appEUI_N2 = devAddr_N2;
+        this.devEUI_N2 =  devEUI_N2;
+        this.devAddr_N2 = devAddr_N2;
+
+        this.appEUI_N3 = devAddr_N3;
+        this.devEUI_N3 = devEUI_N3;
+        this.devAddr_N3 = devAddr_N3;
+
+        this.appEUI_N4 = devAddr_N4;
+        this.devEUI_N4 = devEUI_N4;
+        this.devAddr_N4 = devAddr_N4;
+
         this.pForwarder = pf;
         this.jsonCons = new JsonConstructor();
         this.Sender = new PayloadConstructor(jsonCons);
@@ -146,7 +185,7 @@ public class LoraWanReceiver {
                 | (decodeMessage[14] & (long) 0xFF) << 40
                 | (decodeMessage[15] & (long) 0xFF) << 48
                 | (decodeMessage[16] & (long) 0xFF) << 56;
-
+        //verificar si el mensaje es para mi
         int devNonce = (decodeMessage[17] & 0xFF)
                 | (decodeMessage[18] & 0xFF) << 8;
 
@@ -188,8 +227,6 @@ public class LoraWanReceiver {
         System.out.println(" tempBuiltIn : " + tempBuiltIn);
         System.out.println(" Hum : " + Hum);
         System.out.println(" tempExt : " + tempExt);
-        
-                                                                           
 
         Sensor sensor = new Sensor(batVal, batStat, tempBuiltIn, Hum, tempExt, rssi, time);
         listener.onData(sensor);

@@ -10,25 +10,18 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.silocom.lorawantest.LoraWanReceiver;
 import com.silocom.lorawantest.Utils;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 public class PacketForwarder implements MessageListener {
 
-    private LoraWanReceiver receiver;
+    List<LoraWanReceiver> receivers = new ArrayList<LoraWanReceiver>();
 
     Connection con;
 
     long offsetInMs = 6000000;
-    String data = null;
-    int rssi = 0;
-    int rfch = 0;
-    int size = 0;
-    long tmst = 0;
-    float freq = 0;
-    String datr = null;
-    String codr = null;
-    String modu = null;
-    String time = null;
+
     private final JsonParser parser = new JsonParser();
 
     byte[] sendBuffer = new byte[0];
@@ -37,8 +30,9 @@ public class PacketForwarder implements MessageListener {
         this.con = con;
     }
 
-    public void setReceiver(LoraWanReceiver receiver) {
-        this.receiver = receiver;
+    public void addReceiver(LoraWanReceiver receiver) {
+
+        receivers.add(receiver);
     }
 
     public void receiveMessage(byte[] message) {
@@ -55,7 +49,7 @@ public class PacketForwarder implements MessageListener {
 
                 pushAckPacket(tokenPush);
 
-                if (receiver != null) {
+                if (receivers.size() > 0) {
                     try {
                         byte[] mesgWithoutGarbage = new byte[message.length - 12];
                         System.arraycopy(message, 12, mesgWithoutGarbage, 0, mesgWithoutGarbage.length);
@@ -67,22 +61,22 @@ public class PacketForwarder implements MessageListener {
 
                                 JsonObject gsonObj = obj.getAsJsonObject();
 
-                                data = gsonObj.get("data").getAsString();
-                                rfch = gsonObj.get("rfch").getAsInt();
-                                size = gsonObj.get("size").getAsInt();
-                                datr = gsonObj.get("datr").getAsString();
-                                codr = gsonObj.get("codr").getAsString();
-                                modu = gsonObj.get("modu").getAsString();
-                                time = gsonObj.get("time").getAsString();
-                                tmst = gsonObj.get("tmst").getAsLong();
-                                rssi = gsonObj.get("rssi").getAsInt();
-                                
-                                freq = (float) 923.2;
+                                String data = gsonObj.get("data").getAsString();
+                                int rfch = gsonObj.get("rfch").getAsInt();
+                                int size = gsonObj.get("size").getAsInt();
+                                String datr = gsonObj.get("datr").getAsString();
+                                String codr = gsonObj.get("codr").getAsString();
+                                String modu = gsonObj.get("modu").getAsString();
+                                String time = gsonObj.get("time").getAsString();
+                                long tmst = gsonObj.get("tmst").getAsLong();
+                                int rssi = gsonObj.get("rssi").getAsInt();
+                                float freq = (float) 923.2;
 
+                                //Mensaje, data, Imme, Tmst,         freq, rfch, pow,modu, datr, codr, ipol, size, ncrc
+                                for (LoraWanReceiver receiver : receivers) {
+                                    receiver.ReceiveMessage(message, data, false, tmst + offsetInMs, freq, rfch, 14, modu, datr, codr, true, size, true, rssi, time); //funcion que envia mensaje para ver de que tipo es 
+                                }
                             }
-                            //Mensaje, data, Imme, Tmst,               freq, rfch, pow,modu, datr, codr, ipol, size, ncrc
-                            receiver.ReceiveMessage(message, data, false, tmst + offsetInMs, freq, rfch, 14, modu, datr, codr, true, size, true, rssi, time); //funcion que envia mensaje para ver de que tipo es 
-
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -160,7 +154,7 @@ public class PacketForwarder implements MessageListener {
         byte[] data = JsonTxpk.getBytes();
         byte[] token = new byte[2];
         new Random().nextBytes(token);
-        
+
         byte[] mesgToSend = new byte[4 + data.length];
         mesgToSend[0] = 0x02;
         mesgToSend[1] = token[0];
