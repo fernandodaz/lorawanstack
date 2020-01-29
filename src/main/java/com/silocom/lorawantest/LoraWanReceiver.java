@@ -1,8 +1,8 @@
-
 package com.silocom.lorawantest;
 
 import com.google.gson.JsonParser;
 import com.silocom.protocol.lorawan.pf.PacketForwarder;
+import static java.lang.Math.random;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -132,8 +132,6 @@ public class LoraWanReceiver {
 
             default:
                 sensorDecoder(message, rssi, time);
-                String string2 = new String(messageComplete);
-                System.out.println("Uplink data: " + string2);
 
         }
 
@@ -144,6 +142,7 @@ public class LoraWanReceiver {
 
         byte[] decodeMessage = Base64.decodeBase64(message);
         int mType = (decodeMessage[0] & 0xE0) << 5;
+
         long appEUI = (decodeMessage[1] & 0xFF)
                 | (decodeMessage[2] & (long) 0xFF) << 8
                 | (decodeMessage[3] & (long) 0xFF) << 16
@@ -154,29 +153,31 @@ public class LoraWanReceiver {
                 | (decodeMessage[8] & (long) 0xFF) << 56;
 
         byte[] devEUIReceived = new byte[8];
-        devEUIReceived[0] = (byte) (decodeMessage[9] & 0xFF);
-        devEUIReceived[1] = (byte) (decodeMessage[10] & 0xFF);
-        devEUIReceived[2] = (byte) (decodeMessage[11] & 0xFF);
-        devEUIReceived[3] = (byte) (decodeMessage[12] & 0xFF);
-        devEUIReceived[4] = (byte) (decodeMessage[13] & 0xFF);
-        devEUIReceived[5] = (byte) (decodeMessage[14] & 0xFF);
-        devEUIReceived[6] = (byte) (decodeMessage[15] & 0xFF);
-        devEUIReceived[7] = (byte) (decodeMessage[16] & 0xFF);
+        devEUIReceived[0] = decodeMessage[16];
+        devEUIReceived[1] = decodeMessage[15];
+        devEUIReceived[2] = decodeMessage[14];
+        devEUIReceived[3] = decodeMessage[13];
+        devEUIReceived[4] = decodeMessage[12];
+        devEUIReceived[5] = decodeMessage[11];
+        devEUIReceived[6] = decodeMessage[10];
+        devEUIReceived[7] = decodeMessage[9];
 
         if (Arrays.equals(devEUIReceived, devEUIExpected)) { //verificar si el mensaje es para mi
-            int devNonce = (decodeMessage[17] & 0xFF)
-                    | (decodeMessage[18] & 0xFF) << 8;
+            
+            byte[] devNonce = new byte[2];
+            devNonce[0] = decodeMessage[17];   //pasar a byte
+            devNonce[1] = decodeMessage[18];
+            
+            byte[] appNonce = new byte[3];
+            new Random().nextBytes(appNonce); 
+              
+            appSKey = deriveAppSKey(appNonce, netID, devNonce);
+            nwSKey = deriveNwSKey(appNonce, netID, devNonce);
 
-            int appNonce = rand.nextInt(0x100000) + 0xEFFFFF;
-
-            appSKey = deriveAppSKey(appNonce, 0x010001, devNonce);
-            nwSKey = deriveNwSKey(appNonce, 0x010001, devNonce);
-
-            this.pForwarder.sendMessage(Sender.JoinAccept(appNonce, imme, tmst, freq, rfch, powe, modu, datr, codr, ipol, size, ncrc, appKey));
+            this.pForwarder.sendMessage(Sender.JoinAccept(appNonce, imme, tmst, freq, rfch, powe, modu, datr, codr, ipol, size, ncrc, appKey, netID, devAddrExpected));
 
         } else {
-
-            System.out.println(" No es para mi ");
+            System.out.println(" no es el devEUI esperado ");
         }
 
     }
@@ -190,7 +191,6 @@ public class LoraWanReceiver {
             return;
         }
 
-        System.out.println(" Payload received: " + Utils.hexToString(rawData));
 
         int batVal = ((rawData[0] & 0x3F) << 8) | (rawData[1] & 0xFF);
         int batStat = ((((rawData[0] & 0xFF) << 8) | (rawData[1] & 0xFF)) >> 14) & 0xFF;
@@ -207,12 +207,6 @@ public class LoraWanReceiver {
             tempExtVal |= 0xFFFF0000;
         }
         int tempExt = tempExtVal; //DS18B20,
-
-        System.out.println(" batVal : " + batVal);
-        System.out.println(" batStat : " + batStat);
-        System.out.println(" tempBuiltIn : " + tempBuiltIn);
-        System.out.println(" Hum : " + Hum);
-        System.out.println(" tempExt : " + tempExt);
 
         Sensor sensor = new Sensor(batVal, batStat, tempBuiltIn, Hum, tempExt, rssi, time);
         listener.onData(sensor);
@@ -236,6 +230,8 @@ public class LoraWanReceiver {
             byte[] payload = new byte[decodeMessage.length - 9];
             System.arraycopy(decodeMessage, 9, payload, 0, decodeMessage.length - 9);
             return decryptPayload(payload, devAddrExpected, fCount, (byte) 0);
+        } else {
+            System.out.println(" no es el devAddr esperado ");
         }
         return null;
     } //add
@@ -269,7 +265,7 @@ public class LoraWanReceiver {
         return null;
     }
 
-    public byte[] deriveAppSKey(int AppNonce, int NetId, int DevNonce) {
+    public byte[] deriveAppSKey(byte[] AppNonce, byte[] NetId, byte[] DevNonce) {
 
         try {
             SecretKeySpec key = new SecretKeySpec(appKey, "AES");
@@ -278,21 +274,21 @@ public class LoraWanReceiver {
             byte[] toKey = new byte[16];
             org.bouncycastle.util.Arrays.fill(toKey, (byte) 0);
             toKey[0] = 0x02;
-            toKey[1] = (byte) (AppNonce & 0xff);
-            toKey[2] = (byte) ((AppNonce >> 8) & 0xff);
-            toKey[3] = (byte) ((AppNonce >> 16) & 0xff);
-            toKey[4] = (byte) (NetId & 0xff);
-            toKey[5] = (byte) ((NetId >> 8) & 0xff);
-            toKey[6] = (byte) ((NetId >> 16) & 0xff);
-            toKey[7] = (byte) (DevNonce & 0xff);
-            toKey[8] = (byte) ((DevNonce >> 8) & 0xff);
+            toKey[1] = AppNonce[0];
+            toKey[2] = AppNonce[1];
+            toKey[3] = AppNonce[2];
+            toKey[4] = NetId[0];
+            toKey[5] = NetId[1];
+            toKey[6] = NetId[2];
+            toKey[7] = DevNonce[0];
+            toKey[8] = DevNonce[1];
             return ciph.update(toKey);
         } catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException ignore) {
         }
         return null;
     }
 
-    public byte[] deriveNwSKey(int AppNonce, int NetId, int DevNonce) {
+    public byte[] deriveNwSKey(byte[] AppNonce, byte[] NetId, byte[] DevNonce) {
         try {
             SecretKeySpec key = new SecretKeySpec(appKey, "AES");
             Cipher ciph = Cipher.getInstance("AES/ECB/NoPadding");
@@ -300,14 +296,14 @@ public class LoraWanReceiver {
             byte[] toKey = new byte[16];
             org.bouncycastle.util.Arrays.fill(toKey, (byte) 0);
             toKey[0] = 0x01;
-            toKey[1] = (byte) (AppNonce & 0xff);
-            toKey[2] = (byte) ((AppNonce >> 8) & 0xff);
-            toKey[3] = (byte) ((AppNonce >> 16) & 0xff);
-            toKey[4] = (byte) (NetId & 0xff);
-            toKey[5] = (byte) ((NetId >> 8) & 0xff);
-            toKey[6] = (byte) ((NetId >> 16) & 0xff);
-            toKey[7] = (byte) (DevNonce & 0xff);
-            toKey[8] = (byte) ((DevNonce >> 8) & 0xff);
+            toKey[1] = AppNonce[0];
+            toKey[2] = AppNonce[1];
+            toKey[3] = AppNonce[2];
+            toKey[4] = NetId[0];
+            toKey[5] = NetId[1];
+            toKey[6] = NetId[2];
+            toKey[7] = DevNonce[0];
+            toKey[8] = DevNonce[1];
             return ciph.update(toKey);
         } catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException ignore) {
         }

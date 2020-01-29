@@ -23,45 +23,30 @@ public class PayloadConstructor {
         this.jsonCons = jsonCons;
     }
 
-    public String JoinAccept(int appNonce, boolean imme, long tmst, float freq, int rfch, int powe, String modu,
-            String datr, String codr, boolean ipol, int size, boolean ncrc, byte[] appKey) {  //falta pasar APPEUI,DevEUI, APPKEY
+    public String JoinAccept(byte[] appNonce, boolean imme, long tmst, float freq, int rfch, int powe, String modu,
+            String datr, String codr, boolean ipol, int size, boolean ncrc, byte[] appKey, byte[] netID, byte[] devAddr) {  //falta pasar APPEUI,DevEUI, APPKEY
 
         byte MHDR = 0x20;
 
-        byte[] AppNonce = new byte[3];
-        AppNonce[2] = (byte) (appNonce & 0xFF);
-        AppNonce[1] = (byte) ((appNonce >> 8) & 0xFF);
-        AppNonce[0] = (byte) ((appNonce >> 16) & 0xFF);
-
-        byte[] NetID = new byte[3];
-        NetID[0] = 0x01;
-        NetID[1] = 0x00;
-        NetID[2] = 0x01;
-
-        byte[] DevAddr = new byte[4];
-        DevAddr[0] = 0x01;
-        DevAddr[1] = 0x00;
-        DevAddr[2] = 0x00;
-        DevAddr[3] = 0x01;
-
-        byte DLSetting = 2;
+         byte DLSetting = 2;
 
         byte RxDelay = 1;
 
-        byte[] mic = Mic.calculateMicJoinResponse(MHDR, AppNonce, NetID, DevAddr, DLSetting, RxDelay, null, appKey);
+        
+        byte[] mic = Mic.calculateMicJoinResponse(MHDR, appNonce, netID, devAddr, DLSetting, RxDelay, null, appKey);
 
         byte[] message = new byte[16];
 
-        message[0] = AppNonce[2];
-        message[1] = AppNonce[1];
-        message[2] = AppNonce[0];
-        message[3] = NetID[2];
-        message[4] = NetID[1];
-        message[5] = NetID[0];
-        message[6] = DevAddr[3];
-        message[7] = DevAddr[2];
-        message[8] = DevAddr[1];
-        message[9] = DevAddr[0];
+        message[0] = appNonce[2];
+        message[1] = appNonce[1];
+        message[2] = appNonce[0];
+        message[3] = netID[2];
+        message[4] = netID[1];
+        message[5] = netID[0];
+        message[6] = devAddr[3];
+        message[7] = devAddr[2];
+        message[8] = devAddr[1];
+        message[9] = devAddr[0];
         message[10] = DLSetting;
         message[11] = RxDelay;
         message[12] = mic[0];
@@ -137,11 +122,7 @@ public class PayloadConstructor {
             byte[] mic = new byte[4];
             return new JoinAcceptMessage(MHDR, AppNonce, NetID, DevAddr, DLSetting, RxDelay, mic);
             
-        } catch (NoSuchAlgorithmException ex) {
-            Logger.getLogger(PayloadConstructor.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (NoSuchPaddingException ex) {
-            Logger.getLogger(PayloadConstructor.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (InvalidKeyException ex) {
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException ex) {
             Logger.getLogger(PayloadConstructor.class.getName()).log(Level.SEVERE, null, ex);
         }
         return null;

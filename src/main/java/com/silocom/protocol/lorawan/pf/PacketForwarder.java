@@ -10,8 +10,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.silocom.lorawantest.LoraWanReceiver;
-import com.silocom.lorawantest.Utils;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -22,13 +22,14 @@ public class PacketForwarder implements MessageListener {
     Connection con;
 
     long offsetInMs = 6000000;
-
+    private final byte[] gwIDExpected;
     private final JsonParser parser = new JsonParser();
 
     byte[] sendBuffer = new byte[0];
 
-    public PacketForwarder(Connection con) {
+    public PacketForwarder(Connection con, byte[] gwIDExpected) {
         this.con = con;
+        this.gwIDExpected = gwIDExpected;
     }
 
     public void addReceiver(LoraWanReceiver receiver) {
@@ -37,86 +38,102 @@ public class PacketForwarder implements MessageListener {
     }
 
     public void receiveMessage(byte[] message) {
-
+        
         String mesg = new String(message);
 
         int packetType = message[3] & 0xFF;
+        
+        byte[] gwIDReceived = new byte[8];
+        gwIDReceived[0] = message[4];
+        gwIDReceived[1] = message[5];
+        gwIDReceived[2] = message[6];
+        gwIDReceived[3] = message[7];
+        gwIDReceived[4] = message[8];
+        gwIDReceived[5] = message[9];
+        gwIDReceived[6] = message[10];
+        gwIDReceived[7] = message[11];
 
-        switch (packetType) {
+        if (Arrays.equals(gwIDReceived, gwIDExpected)) {
+            switch (packetType) {
 
-            case 0:
-                int tokenPush = message[1] & 0xFF
-                        | (message[2] & 0xFF) << 8;
+                case 0:
+                    int tokenPush = message[1] & 0xFF
+                            | (message[2] & 0xFF) << 8;
 
-                pushAckPacket(tokenPush);
+                    pushAckPacket(tokenPush);
 
-                if (receivers.size() > 0) {
-                    try {
-                        byte[] mesgWithoutGarbage = new byte[message.length - 12];
-                        System.arraycopy(message, 12, mesgWithoutGarbage, 0, mesgWithoutGarbage.length);
-                        String jsonMessage = new String(mesgWithoutGarbage);
+                    if (receivers.size() > 0) {
+                        try {
+                            byte[] mesgWithoutGarbage = new byte[message.length - 12];
+                            System.arraycopy(message, 12, mesgWithoutGarbage, 0, mesgWithoutGarbage.length);
+                            String jsonMessage = new String(mesgWithoutGarbage);
 
-                        JsonObject gsonArr = parser.parse(jsonMessage).getAsJsonObject();
-                        if (gsonArr.get("rxpk") != null) {
-                            for (JsonElement obj : gsonArr.get("rxpk").getAsJsonArray()) {
+                            JsonObject gsonArr = parser.parse(jsonMessage).getAsJsonObject();
+                            if (gsonArr.get("rxpk") != null) {
+                                for (JsonElement obj : gsonArr.get("rxpk").getAsJsonArray()) {
 
-                                JsonObject gsonObj = obj.getAsJsonObject();
+                                    JsonObject gsonObj = obj.getAsJsonObject();
 
-                                String data = gsonObj.get("data").getAsString();
-                                int rfch = gsonObj.get("rfch").getAsInt();
-                                int size = gsonObj.get("size").getAsInt();
-                                String datr = gsonObj.get("datr").getAsString();
-                                String codr = gsonObj.get("codr").getAsString();
-                                String modu = gsonObj.get("modu").getAsString();
-                                String time = gsonObj.get("time").getAsString();
-                                long tmst = gsonObj.get("tmst").getAsLong();
-                                int rssi = gsonObj.get("rssi").getAsInt();
-                                float freq = (float) 923.2;
+                                    String data = gsonObj.get("data").getAsString();
+                                    int rfch = gsonObj.get("rfch").getAsInt();
+                                    int size = gsonObj.get("size").getAsInt();
+                                    String datr = gsonObj.get("datr").getAsString();
+                                    String codr = gsonObj.get("codr").getAsString();
+                                    String modu = gsonObj.get("modu").getAsString();
+                                    String time = gsonObj.get("time").getAsString();
+                                    long tmst = gsonObj.get("tmst").getAsLong();
+                                    int rssi = gsonObj.get("rssi").getAsInt();
+                                    float freq = (float) 923.2;
 
-                                //Mensaje, data, Imme, Tmst,         freq, rfch, pow,modu, datr, codr, ipol, size, ncrc
-                                for (LoraWanReceiver receiver : receivers) {
-                                    receiver.ReceiveMessage(message, data, false, tmst + offsetInMs, freq, rfch, 14, modu, datr, codr, true, size, true, rssi, time); //funcion que envia mensaje para ver de que tipo es 
+                                    //Mensaje, data, Imme, Tmst, freq, rfch, pow,modu, datr, codr, ipol, size, ncrc
+                                    receivers.forEach((receiver) -> {
+                                        receiver.ReceiveMessage(message, data, false, tmst + offsetInMs, freq, rfch, 14, modu, datr, codr, true, size, true, rssi, time); //funcion que envia mensaje para ver de que tipo es 
+                                    });
                                 }
                             }
+
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
-                    } catch (Exception e) {
-                        e.printStackTrace();
                     }
-                }
-                break;
 
-            case 1:
+                    break;
 
-                break;
+                case 1:
 
-            case 2:  //Mantiene la sesion udp activa con el gateway,
+                    break;
 
-                int tokenPull = message[1] & 0xFF
-                        | (message[2] & 0xFF) << 8;
+                case 2:  //Mantiene la sesion udp activa con el gateway,
 
-                pullAckPacket(tokenPull);
+                    int tokenPull = message[1] & 0xFF
+                            | (message[2] & 0xFF) << 8;
 
-                if (sendBuffer.length > 0) {       //ventana de tiempo de respuesta después de recibir petición de ACK
-                    con.sendMessage(sendBuffer);
-                    sendBuffer = new byte[0];
-                }
+                    pullAckPacket(tokenPull);
 
-                break;
+                    if (sendBuffer.length > 0) {       //ventana de tiempo de respuesta después de recibir petición de ACK
+                        con.sendMessage(sendBuffer);
+                        sendBuffer = new byte[0];
+                    }
 
-            case 3:
+                    break;
 
-                break;
+                case 3:
 
-            case 4:
+                    break;
 
-                break;
+                case 4:
 
-            case 5:
+                    break;
 
-                break;
+                case 5:
 
-        }
+                    break;
+
+            }
+        }else System.out.println(" No es el gwID Esperado, no proceso");
     }
+
+    
 
     public void pushDataPacket() {
     }

@@ -76,6 +76,8 @@ public abstract class Mic {
             byte[] CFList, byte[] appKey) {
 
         if (AppNonce.length != 3 || NetID.length != 3 || DevAddr.length != 4) {
+            
+            
             return null;
         }
         if (CFList == null) {
