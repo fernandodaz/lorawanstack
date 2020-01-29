@@ -15,8 +15,7 @@ public class Main {
         com.silocom.m2m.layer.physical.Connection con = PhysicalLayer.addConnection(PhysicalLayer.UDPCALLBACK, 1700, "192.168.2.69");
         PacketForwarder rec = new PacketForwarder(con);
 
-        LoraWanReceiver LoraWan = new LoraWanReceiver(nwSKey, appSKey, appKey, netID, appEUI_N1, devEUI_N1, devAddr_N1,
-                appEUI_N2, devEUI_N2, devAddr_N2, appEUI_N3, devEUI_N3, devAddr_N3, appEUI_N4, devEUI_N4, devAddr_N4,
+        LoraWanReceiver LoraWan = new LoraWanReceiver(nwSKey, appSKey, appKey, netID, appEUI, devEUIExpected, devAddrExpected,
                 rec, new SensorListener() {
             @Override
             public void onData(Sensor sensor) {
@@ -45,20 +44,8 @@ public class Main {
 
     private static final byte[] netID = new byte[]{(byte) 0x01, (byte) 0x00, (byte) 0x01};
 
-    private static final byte[] appEUI_N1 = new byte[]{(byte) 0x01, (byte) 0x00, (byte) 0x01};
-    private static final byte[] devEUI_N1 = new byte[]{(byte) 0x01, (byte) 0x00, (byte) 0x01};
-    private static final byte[] devAddr_N1 = new byte[]{(byte) 0x01, (byte) 0x00, (byte) 0x01};
-
-    private static final byte[] appEUI_N2 = new byte[]{(byte) 0x01, (byte) 0x00, (byte) 0x01};
-    private static final byte[] devEUI_N2 = new byte[]{(byte) 0x01, (byte) 0x00, (byte) 0x01};
-    private static final byte[] devAddr_N2 = new byte[]{(byte) 0x01, (byte) 0x00, (byte) 0x01};
-
-    private static final byte[] appEUI_N3 = new byte[]{(byte) 0x01, (byte) 0x00, (byte) 0x01};
-    private static final byte[] devEUI_N3 = new byte[]{(byte) 0x01, (byte) 0x00, (byte) 0x01};
-    private static final byte[] devAddr_N3 = new byte[]{(byte) 0x01, (byte) 0x00, (byte) 0x01};
-
-    private static final byte[] appEUI_N4 = new byte[]{(byte) 0x01, (byte) 0x00, (byte) 0x01};
-    private static final byte[] devEUI_N4 = new byte[]{(byte) 0x01, (byte) 0x00, (byte) 0x01};
-    private static final byte[] devAddr_N4 = new byte[]{(byte) 0x01, (byte) 0x00, (byte) 0x01};
+    private static final byte[] appEUI = new byte[]{(byte) 0x01, (byte) 0x00, (byte) 0x01};
+    private static final byte[] devEUIExpected = {(byte) 0x01, (byte) 0x00, (byte) 0x01};
+    private static final byte[] devAddrExpected = new byte[]{(byte) 0x01, (byte) 0x00, (byte) 0x01};
 
 }

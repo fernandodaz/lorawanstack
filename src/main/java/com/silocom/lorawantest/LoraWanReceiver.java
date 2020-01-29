@@ -2,6 +2,7 @@ package com.silocom.lorawantest;
 
 import com.google.gson.JsonParser;
 import com.silocom.protocol.lorawan.pf.PacketForwarder;
+import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -50,30 +51,17 @@ public class LoraWanReceiver {
     private final byte[] appKey;
     private final byte[] netID;
 
-    private final byte[] appEUI_N1;
-    private final byte[] devEUI_N1;
-    private final byte[] devAddr_N1;
-
-    private final byte[] appEUI_N2;
-    private final byte[] devEUI_N2;
-    private final byte[] devAddr_N2;
-
-    private final byte[] appEUI_N3;
-    private final byte[] devEUI_N3;
-    private final byte[] devAddr_N3;
-
-    private final byte[] appEUI_N4;
-    private final byte[] devEUI_N4;
-    private final byte[] devAddr_N4;
+    private final byte[] appEUI;
+    private final byte[] devEUIExpected;
+    private final byte[] devAddrExpected;
 
     private final Cipher cipher;
     private final SensorListener listener;
     private final Random rand = new Random();
     private final JsonParser parser = new JsonParser();
 
-    public LoraWanReceiver(byte[] nwSKey, byte[] appSKey, byte[] appKey, byte[] netID, byte[] appEUI_N1, byte[] devEUI_N1,
-            byte[] devAddr_N1, byte[] appEUI_N2, byte[] devEUI_N2, byte[] devAddr_N2, byte[] appEUI_N3, byte[] devEUI_N3,
-            byte[] devAddr_N3, byte[] appEUI_N4, byte[] devEUI_N4, byte[] devAddr_N4, PacketForwarder pf,
+    public LoraWanReceiver(byte[] nwSKey, byte[] appSKey, byte[] appKey, byte[] netID, byte[] appEUI, byte[] devEUIExpected,
+            byte[] devAddrExpected, PacketForwarder pf,
             SensorListener listener) throws NoSuchAlgorithmException, NoSuchPaddingException {
 
         this.cipher = Cipher.getInstance("AES/CTR/PKCS5Padding");
@@ -83,21 +71,9 @@ public class LoraWanReceiver {
         this.appKey = appKey;
         this.netID = netID;
 
-        this.appEUI_N1 = appEUI_N1;
-        this.devEUI_N1 = devEUI_N1;
-        this.devAddr_N1 = devAddr_N1;
-
-        this.appEUI_N2 = devAddr_N2;
-        this.devEUI_N2 =  devEUI_N2;
-        this.devAddr_N2 = devAddr_N2;
-
-        this.appEUI_N3 = devAddr_N3;
-        this.devEUI_N3 = devEUI_N3;
-        this.devAddr_N3 = devAddr_N3;
-
-        this.appEUI_N4 = devAddr_N4;
-        this.devEUI_N4 = devEUI_N4;
-        this.devAddr_N4 = devAddr_N4;
+        this.appEUI = appEUI;
+        this.devEUIExpected = devEUIExpected;
+        this.devAddrExpected = devAddrExpected;
 
         this.pForwarder = pf;
         this.jsonCons = new JsonConstructor();
@@ -118,7 +94,7 @@ public class LoraWanReceiver {
                 String string = new String(messageComplete);
                 System.out.println(" Join Request: " + string);
 
-                decodeJoinRequest(message, imme, tmst, freq, rfch, powe, modu, datr, codr, ipol, size, ncrc, appKey);
+                decodeJoinRequest(message, imme, tmst, freq, rfch, powe, modu, datr, codr, ipol, size, ncrc, appKey, devAddrExpected);
                 break;
 
             case joinAccept:
@@ -164,7 +140,7 @@ public class LoraWanReceiver {
     }
 
     public void decodeJoinRequest(String message, boolean imme, long tmst, float freq, int rfch, int powe,
-            String modu, String datr, String codr, boolean ipol, int size, boolean ncrc, byte[] appKey) {
+            String modu, String datr, String codr, boolean ipol, int size, boolean ncrc, byte[] appKey, byte[] devAddrExpected) {
 
         byte[] decodeMessage = Base64.decodeBase64(message);
         int mType = (decodeMessage[0] & 0xE0) << 5;
@@ -177,32 +153,42 @@ public class LoraWanReceiver {
                 | (decodeMessage[7] & (long) 0xFF) << 48
                 | (decodeMessage[8] & (long) 0xFF) << 56;
 
-        long devEUI = (decodeMessage[9] & 0xFF)
-                | (decodeMessage[10] & (long) 0xFF) << 8
-                | (decodeMessage[11] & (long) 0xFF) << 16
-                | (decodeMessage[12] & (long) 0xFF) << 24
-                | (decodeMessage[13] & (long) 0xFF) << 32
-                | (decodeMessage[14] & (long) 0xFF) << 40
-                | (decodeMessage[15] & (long) 0xFF) << 48
-                | (decodeMessage[16] & (long) 0xFF) << 56;
-        //verificar si el mensaje es para mi
-        int devNonce = (decodeMessage[17] & 0xFF)
-                | (decodeMessage[18] & 0xFF) << 8;
+        byte[] devEUIReceived = new byte[8];
+        devEUIReceived[0] = (byte) (decodeMessage[9] & 0xFF);
+        devEUIReceived[1] = (byte) (decodeMessage[10] & 0xFF);
+        devEUIReceived[2] = (byte) (decodeMessage[11] & 0xFF);
+        devEUIReceived[3] = (byte) (decodeMessage[12] & 0xFF);
+        devEUIReceived[4] = (byte) (decodeMessage[13] & 0xFF);
+        devEUIReceived[5] = (byte) (decodeMessage[14] & 0xFF);
+        devEUIReceived[6] = (byte) (decodeMessage[15] & 0xFF);
+        devEUIReceived[7] = (byte) (decodeMessage[16] & 0xFF);
 
-        int appNonce = rand.nextInt(0x100000) + 0xEFFFFF;
+        if (Arrays.equals(devEUIReceived, devEUIExpected)) { //verificar si el mensaje es para mi
+            int devNonce = (decodeMessage[17] & 0xFF)
+                    | (decodeMessage[18] & 0xFF) << 8;
 
-        appSKey = deriveAppSKey(appNonce, 0x010001, devNonce);
-        nwSKey = deriveNwSKey(appNonce, 0x010001, devNonce);
+            int appNonce = rand.nextInt(0x100000) + 0xEFFFFF;
 
-        this.pForwarder.sendMessage(Sender.JoinAccept(appNonce, imme, tmst, freq, rfch, powe, modu, datr, codr, ipol, size, ncrc, appKey));
+            appSKey = deriveAppSKey(appNonce, 0x010001, devNonce);
+            nwSKey = deriveNwSKey(appNonce, 0x010001, devNonce);
+
+            this.pForwarder.sendMessage(Sender.JoinAccept(appNonce, imme, tmst, freq, rfch, powe, modu, datr, codr, ipol, size, ncrc, appKey));
+
+        } else {
+
+            System.out.println(" No es para mi ");
+        }
 
     }
 
     public void sensorDecoder(String message, int rssi, String time) {
 
-        byte[] rawData = new byte[11];
+        byte[] rawData = decodeMACPayload(message);
 
-        rawData = decodeMACPayload(message);
+        if (rawData != null) {
+        } else {
+            return;
+        }
 
         System.out.println(" Payload received: " + Utils.hexToString(rawData));
 
@@ -235,19 +221,26 @@ public class LoraWanReceiver {
     public byte[] decodeMACPayload(String message) {
         byte[] decodeMessage = Base64.decodeBase64(message);
         int mType = decodeMessage[0] & 0xFF;
-        int devAddress = (decodeMessage[1] & 0xff)
-                | (decodeMessage[2] & 0xff) << 8
-                | (decodeMessage[3] & 0xff) << 16
-                | (decodeMessage[4] & 0xff) << 24;
+        byte[] devAddrReceived = new byte[4];
+
+        devAddrReceived[0] = (byte) (decodeMessage[1] & 0xff);
+        devAddrReceived[1] = (byte) (decodeMessage[2] & 0xff);
+        devAddrReceived[2] = (byte) (decodeMessage[3] & 0xff);
+        devAddrReceived[3] = (byte) (decodeMessage[4] & 0xff);
+
         int fCtrl = decodeMessage[5] & 0xFF;
         int fCount = ((decodeMessage[7] & 0xff) << 8 | (decodeMessage[6] & 0xff));
 
-        byte[] payload = new byte[decodeMessage.length - 9];
-        System.arraycopy(decodeMessage, 9, payload, 0, decodeMessage.length - 9);
-        return decryptPayload(payload, devAddress, fCount, (byte) 0);
+        if (Arrays.equals(devAddrReceived, devAddrExpected)) {//comparar devAddr
+
+            byte[] payload = new byte[decodeMessage.length - 9];
+            System.arraycopy(decodeMessage, 9, payload, 0, decodeMessage.length - 9);
+            return decryptPayload(payload, devAddrExpected, fCount, (byte) 0);
+        }
+        return null;
     }
 
-    public byte[] decryptPayload(byte[] payload, int devAddress, int fCount, byte dir) {
+    public byte[] decryptPayload(byte[] payload, byte[] devAddress, int fCount, byte dir) {
         try {
             byte[] ivKey = new byte[16];
             Arrays.fill(ivKey, (byte) 0);
@@ -255,10 +248,10 @@ public class LoraWanReceiver {
             ivKey[15] = 1;
 
             ivKey[5] = dir;
-            ivKey[6] = (byte) ((devAddress) & 0xFF);
-            ivKey[7] = (byte) ((devAddress >> 8) & 0xFF);
-            ivKey[8] = (byte) ((devAddress >> 16) & 0xFF);
-            ivKey[9] = (byte) ((devAddress >> 24) & 0xFF);
+            ivKey[6] = devAddress[0];
+            ivKey[7] = devAddress[1];
+            ivKey[8] = devAddress[2];
+            ivKey[9] = devAddress[3];
 
             ivKey[10] = (byte) ((fCount) & 0xFF);
             ivKey[11] = (byte) ((fCount >> 8) & 0xFF);
