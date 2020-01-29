@@ -239,6 +239,7 @@ public class LoraWanReceiver {
         }
         return null;
     } //add
+    //comm
 
     public byte[] decryptPayload(byte[] payload, byte[] devAddress, int fCount, byte dir) {
         try {
