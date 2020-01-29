@@ -1,8 +1,8 @@
+
 package com.silocom.lorawantest;
 
 import com.google.gson.JsonParser;
 import com.silocom.protocol.lorawan.pf.PacketForwarder;
-import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
