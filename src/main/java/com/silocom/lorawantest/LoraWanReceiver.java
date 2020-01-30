@@ -91,7 +91,7 @@ public class LoraWanReceiver {
             case joinRequest:
 
                 String string = new String(messageComplete);
-                System.out.println(" Join Request: " + string);
+             //   System.out.println(" Join Request: " + string);
 
                 decodeJoinRequest(message, imme, tmst, freq, rfch, powe, modu, datr, codr, ipol, size, ncrc, appKey, devAddr_Expected);
                 break;
@@ -131,7 +131,7 @@ public class LoraWanReceiver {
 
             default:
                 sensorDecoder(message, rssi, time);
-                  
+              
         }
 
     }
@@ -143,14 +143,14 @@ public class LoraWanReceiver {
         int mType = (decodeMessage[0] & 0xE0) << 5;
 
         byte[] appEUI_Received = new byte[8];
-                appEUI_Received[0] = decodeMessage[1];
-                appEUI_Received[1] = decodeMessage[2];
-                appEUI_Received[2] = decodeMessage[3];
-                appEUI_Received[3] = decodeMessage[4];
-                appEUI_Received[4] = decodeMessage[5];
-                appEUI_Received[5] = decodeMessage[6];
-                appEUI_Received[6] = decodeMessage[7];
-                appEUI_Received[7] = decodeMessage[8];
+        appEUI_Received[0] = decodeMessage[1];
+        appEUI_Received[1] = decodeMessage[2];
+        appEUI_Received[2] = decodeMessage[3];
+        appEUI_Received[3] = decodeMessage[4];
+        appEUI_Received[4] = decodeMessage[5];
+        appEUI_Received[5] = decodeMessage[6];
+        appEUI_Received[6] = decodeMessage[7];
+        appEUI_Received[7] = decodeMessage[8];
 
         byte[] devEUI_Received = new byte[8];
         devEUI_Received[0] = decodeMessage[16];
@@ -163,16 +163,16 @@ public class LoraWanReceiver {
         devEUI_Received[7] = decodeMessage[9];
 
         if (Arrays.equals(devEUI_Received, devEUI_Expected)) { //verificar si el mensaje es para mi
-            
+
             byte[] devNonce = new byte[2];
             devNonce[0] = decodeMessage[18];   //pasar a byte
             devNonce[1] = decodeMessage[17];
-            
+
             byte[] appNonce = new byte[3];
-            new Random().nextBytes(appNonce); 
-              
-            appSKey = deriveAppSKey(appNonce, netID, devNonce);
-            nwSKey = deriveNwSKey(appNonce, netID, devNonce);
+            new Random().nextBytes(appNonce);
+
+            appSKey = deriveAppSKey(appNonce, devNonce);
+            nwSKey = deriveNwSKey(appNonce, devNonce);
 
             this.pForwarder.sendMessage(Sender.JoinAccept(appNonce, imme, tmst, freq, rfch, powe, modu, datr, codr, ipol, size, ncrc, appKey, netID, devAddr_Expected));
 
@@ -189,7 +189,6 @@ public class LoraWanReceiver {
             return;
         }
 
-
         int batVal = ((rawData[0] & 0x3F) << 8) | (rawData[1] & 0xFF);
         int batStat = ((((rawData[0] & 0xFF) << 8) | (rawData[1] & 0xFF)) >> 14) & 0xFF;
         int tempBuiltInVal = (((rawData[2] & 0xFF) << 8) | (rawData[3] & 0xFF));
@@ -198,20 +197,20 @@ public class LoraWanReceiver {
             tempBuiltInVal |= 0xFFFF0000;
         }
         int tempBuiltIn = tempBuiltInVal;
-        
+
         int Hum = (((rawData[4] & 0xFF) << 8) | (rawData[5] & 0xFF));
 
         int tempExtVal = (((rawData[7] & 0xFF) << 8) | (rawData[8] & 0xFF));
-        
+
         if ((rawData[7] & 0x80) > 0) {
             tempExtVal |= 0xFFFF0000;
         }
-       
+
         int tempExt = tempExtVal; //DS18B20,
-        
-        System.out.println("tempExtVal: " + tempExtVal);
-        System.out.println("tempExt: " + tempExt);
-        System.out.println("Hum: " + Hum);
+       /*System.out.println("batVal: " + (float)batVal/1000) ;
+        System.out.println("tempBuiltIn: " + (float)tempBuiltIn/100) ;
+        System.out.println("tempExt: " + (float)tempExt/100);
+        System.out.println("Hum: " + Hum/10);*/
 
         Sensor sensor = new Sensor(batVal, batStat, tempBuiltIn, Hum, tempExt, rssi, time);
         listener.onData(sensor);
@@ -219,19 +218,17 @@ public class LoraWanReceiver {
 
     public byte[] decodeMACPayload(String message) {
         byte[] decodeMessage = Base64.decodeBase64(message);
-      
+
         byte[] devAddr_Received = new byte[4];
         devAddr_Received[0] = decodeMessage[4];
         devAddr_Received[1] = decodeMessage[3];
         devAddr_Received[2] = decodeMessage[2];
         devAddr_Received[3] = decodeMessage[1];
 
-        //int fCount = ((decodeMessage[7] & 0xff) << 8 | (decodeMessage[6] & 0xff));
-          
-         byte[] fCnt = new byte[2];
-         fCnt[0] = decodeMessage[7];        
-         fCnt[1] = decodeMessage[6];        
-         
+        byte[] fCnt = new byte[2];
+        fCnt[0] = decodeMessage[7];
+        fCnt[1] = decodeMessage[6];
+
         if (Arrays.equals(devAddr_Received, devAddr_Expected)) {//comparar devAddr
 
             byte[] payload = new byte[decodeMessage.length - 9];
@@ -239,29 +236,27 @@ public class LoraWanReceiver {
             byte[] dir = new byte[1];
             return decryptPayload(payload, devAddr_Expected, /*fCount*/ fCnt, dir);
         } else {
-              return null;
+            return null;
         }
-       // return null;
-    } 
-    
-    
+        // return null;
+    }
 
     public byte[] decryptPayload(byte[] payload, byte[] devAddress, /*int fCount*/ byte[] fCnt, byte[] dir) {
         try {
-            
+
             byte[] ivKey = new byte[16];
             Arrays.fill(ivKey, (byte) 0);
             ivKey[0] = 1;
             ivKey[15] = 1;
 
             ivKey[5] = dir[0];
-            ivKey[6] = devAddress[0];
-            ivKey[7] = devAddress[1];
-            ivKey[8] = devAddress[2];
-            ivKey[9] = devAddress[3];
+            ivKey[6] = devAddress[3];
+            ivKey[7] = devAddress[2];
+            ivKey[8] = devAddress[1];
+            ivKey[9] = devAddress[0];
 
-            ivKey[10] = fCnt[0];    //fCnt[0]
-            ivKey[11] = fCnt[1];  //fCnt[1]
+            ivKey[10] = fCnt[0];
+            ivKey[11] = fCnt[1];
 
             IvParameterSpec ivParameterSpec = new IvParameterSpec(ivKey);
 
@@ -274,34 +269,33 @@ public class LoraWanReceiver {
         return null;
     }
 
-    public byte[] deriveAppSKey(byte[] AppNonce, byte[] NetId, byte[] DevNonce) {
+    public byte[] deriveAppSKey(byte[] AppNonce, byte[] DevNonce) {
 
         try {
-            
+
             SecretKeySpec key = new SecretKeySpec(appKey, "AES");
             Cipher ciph = Cipher.getInstance("AES/ECB/NoPadding");
             ciph.init(Cipher.ENCRYPT_MODE, key);
             byte[] toKey = new byte[16];
             org.bouncycastle.util.Arrays.fill(toKey, (byte) 0);
             toKey[0] = 0x02;
-            toKey[1] = AppNonce[0];
+            toKey[1] = AppNonce[2];
             toKey[2] = AppNonce[1];
-            toKey[3] = AppNonce[2];
-            toKey[4] = NetId[0];
-            toKey[5] = NetId[1];
-            toKey[6] = NetId[2];
-            toKey[7] = DevNonce[0];
-            toKey[8] = DevNonce[1];
-           
+            toKey[3] = AppNonce[0];
+            toKey[4] = netID[2];
+            toKey[5] = netID[1];
+            toKey[6] = netID[0];
+            toKey[7] = DevNonce[1];
+            toKey[8] = DevNonce[0];
+
             return ciph.update(toKey);
         } catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException ignore) {
         }
         return null;
     }
 
-    
     //Not in use
-    public byte[] deriveNwSKey(byte[] AppNonce, byte[] NetId, byte[] DevNonce) {
+    public byte[] deriveNwSKey(byte[] AppNonce, byte[] DevNonce) {
         try {
             SecretKeySpec key = new SecretKeySpec(appKey, "AES");
             Cipher ciph = Cipher.getInstance("AES/ECB/NoPadding");
@@ -312,12 +306,12 @@ public class LoraWanReceiver {
             toKey[1] = AppNonce[0];
             toKey[2] = AppNonce[1];
             toKey[3] = AppNonce[2];
-            toKey[4] = NetId[0];
-            toKey[5] = NetId[1];
-            toKey[6] = NetId[2];
+            toKey[4] = netID[0];
+            toKey[5] = netID[1];
+            toKey[6] = netID[2];
             toKey[7] = DevNonce[0];
             toKey[8] = DevNonce[1];
-       
+
             return ciph.update(toKey);
         } catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException ignore) {
         }

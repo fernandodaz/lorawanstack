@@ -55,7 +55,7 @@ public class Main {
         (byte) 0xD2, (byte) 0x34, (byte) 0xCD, (byte) 0xF9, (byte) 0x77,
         (byte) 0xA5, (byte) 0x8C, (byte) 0xAB, (byte) 0x9B, (byte) 0xBB};
 
-    private static final byte[] appKey_N1 = new byte[]{(byte) 0x1C,
+    private static final byte[] appKey_N1 = new byte[]{(byte) 0x1C,  //1C
         (byte) 0x19, (byte) 0x2F, (byte) 0xBE, (byte) 0xC4, (byte) 0x27,
         (byte) 0x91, (byte) 0x63, (byte) 0x58, (byte) 0xDB, (byte) 0x6C,
         (byte) 0x1B, (byte) 0xE6, (byte) 0xFF, (byte) 0x2D, (byte) 0xDF};
@@ -72,7 +72,7 @@ public class Main {
 
     
     
-    private static final byte[] nwSKey_N2 = new byte[]{(byte) 0xBD, (byte) 0x85,
+    private static final byte[] nwSKey_N2 = new byte[]{(byte) 0xBD, (byte) 0x85, 
         (byte) 0x64, (byte) 0x4B, (byte) 0x69, (byte) 0xFA, (byte) 0xA8,
         (byte) 0xFD, (byte) 0x38, (byte) 0x55, (byte) 0x24, (byte) 0xE2,
         (byte) 0xA5, (byte) 0x5E, (byte) 0xDE, (byte) 0x86};
@@ -82,14 +82,14 @@ public class Main {
         (byte) 0x6A, (byte) 0x9F, (byte) 0x8D, (byte) 0x9F, (byte) 0x97,
         (byte) 0x73, (byte) 0x44, (byte) 0xB5, (byte) 0x2A, (byte) 0x8F};
 
-    private static final byte[] appKey_N2 = new byte[]{(byte) 0xBA,
+    private static final byte[] appKey_N2 = new byte[]{(byte) 0xBA,    //BA
         (byte) 0x68, (byte) 0x23, (byte) 0x8E, (byte) 0xDB, (byte) 0x33,
         (byte) 0xEB, (byte) 0x2C, (byte) 0xC8, (byte) 0x29, (byte) 0x94,
         (byte) 0x27, (byte) 0xB9, (byte) 0x5D, (byte) 0x1B, (byte) 0x2B};
 
     private static final byte[] appEUI_N2 = new byte[]{(byte) 0xA0,
         (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00,
-        (byte) 0x01, (byte) 0x00};
+        (byte) 0x01, (byte) 0x00};;
 
     private static final byte[] devEUIExpected_N2 = new byte[]{(byte) 0xA8,
         (byte) 0x40, (byte) 0x41, (byte) 0x00, (byte) 0x01, (byte) 0x81,

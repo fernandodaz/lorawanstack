@@ -17,7 +17,7 @@ import java.util.Random;
 
 public class PacketForwarder implements MessageListener {
 
-    List<LoraWanReceiver> receivers = new ArrayList<LoraWanReceiver>();
+    List<LoraWanReceiver> receivers = new ArrayList<>();
 
     Connection con;
 
@@ -181,7 +181,7 @@ public class PacketForwarder implements MessageListener {
         System.arraycopy(data, 0, mesgToSend, 4, data.length);
         sendBuffer = mesgToSend;
         String string = new String(mesgToSend);
-        System.out.println(" Join accept: " + string);
+       // System.out.println(" Join accept: " + string);
 
     }
 
