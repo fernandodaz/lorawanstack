@@ -9,6 +9,7 @@ import com.silocom.m2m.layer.physical.MessageListener;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 import com.silocom.lorawantest.LoraWanReceiver;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,8 +40,6 @@ public class PacketForwarder implements MessageListener {
 
     public void receiveMessage(byte[] message) {
         
-        String mesg = new String(message);
-
         int packetType = message[3] & 0xFF;
         
         byte[] gwIDReceived = new byte[8];
@@ -92,8 +91,7 @@ public class PacketForwarder implements MessageListener {
                                 }
                             }
 
-                        } catch (Exception e) {
-                            e.printStackTrace();
+                        } catch (JsonSyntaxException e) {
                         }
                     }
 
@@ -130,7 +128,7 @@ public class PacketForwarder implements MessageListener {
                     break;
 
             }
-        }else System.out.println(" No es el gwID Esperado, no proceso");
+        }
     }
 
     
@@ -180,8 +178,6 @@ public class PacketForwarder implements MessageListener {
         mesgToSend[3] = 0x03;
         System.arraycopy(data, 0, mesgToSend, 4, data.length);
         sendBuffer = mesgToSend;
-        String string = new String(mesgToSend);
-       // System.out.println(" Join accept: " + string);
 
     }
 

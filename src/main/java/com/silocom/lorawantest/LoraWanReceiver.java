@@ -1,8 +1,6 @@
 package com.silocom.lorawantest;
 
-import com.google.gson.JsonParser;
 import com.silocom.protocol.lorawan.pf.PacketForwarder;
-import static java.lang.Math.random;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -57,8 +55,6 @@ public class LoraWanReceiver {
 
     private final Cipher cipher;
     private final SensorListener listener;
-    private final Random rand = new Random();
-    private final JsonParser parser = new JsonParser();
 
     public LoraWanReceiver(byte[] nwSKey, byte[] appSKey, byte[] appKey, byte[] netID, byte[] appEUI, byte[] devEUI_Expected,
             byte[] devAddr_Expected, PacketForwarder pf,
@@ -90,10 +86,8 @@ public class LoraWanReceiver {
 
             case joinRequest:
 
-                String string = new String(messageComplete);
-             //   System.out.println(" Join Request: " + string);
-
                 decodeJoinRequest(message, imme, tmst, freq, rfch, powe, modu, datr, codr, ipol, size, ncrc, appKey, devAddr_Expected);
+               
                 break;
 
             case joinAccept:
@@ -121,7 +115,7 @@ public class LoraWanReceiver {
                 break;
 
             case RFU:
-                //TODO
+                //Reserved for future uses
 
                 break;
 
@@ -130,6 +124,7 @@ public class LoraWanReceiver {
                 break;
 
             default:
+               
                 sensorDecoder(message, rssi, time);
               
         }
@@ -140,8 +135,8 @@ public class LoraWanReceiver {
             String modu, String datr, String codr, boolean ipol, int size, boolean ncrc, byte[] appKey, byte[] devAddr_Expected) {
 
         byte[] decodeMessage = Base64.decodeBase64(message);
-        int mType = (decodeMessage[0] & 0xE0) << 5;
-
+        
+        //Not in use yet
         byte[] appEUI_Received = new byte[8];
         appEUI_Received[0] = decodeMessage[1];
         appEUI_Received[1] = decodeMessage[2];
@@ -162,10 +157,10 @@ public class LoraWanReceiver {
         devEUI_Received[6] = decodeMessage[10];
         devEUI_Received[7] = decodeMessage[9];
 
-        if (Arrays.equals(devEUI_Received, devEUI_Expected)) { //verificar si el mensaje es para mi
+        if (Arrays.equals(devEUI_Received, devEUI_Expected)) { 
 
             byte[] devNonce = new byte[2];
-            devNonce[0] = decodeMessage[18];   //pasar a byte
+            devNonce[0] = decodeMessage[18];   
             devNonce[1] = decodeMessage[17];
 
             byte[] appNonce = new byte[3];
@@ -207,11 +202,7 @@ public class LoraWanReceiver {
         }
 
         int tempExt = tempExtVal; //DS18B20,
-       /*System.out.println("batVal: " + (float)batVal/1000) ;
-        System.out.println("tempBuiltIn: " + (float)tempBuiltIn/100) ;
-        System.out.println("tempExt: " + (float)tempExt/100);
-        System.out.println("Hum: " + Hum/10);*/
-
+ 
         Sensor sensor = new Sensor(batVal, batStat, tempBuiltIn, Hum, tempExt, rssi, time);
         listener.onData(sensor);
     }
@@ -234,14 +225,14 @@ public class LoraWanReceiver {
             byte[] payload = new byte[decodeMessage.length - 9];
             System.arraycopy(decodeMessage, 9, payload, 0, decodeMessage.length - 9);
             byte[] dir = new byte[1];
-            return decryptPayload(payload, devAddr_Expected, /*fCount*/ fCnt, dir);
+            return decryptPayload(payload, devAddr_Expected, fCnt, dir);
         } else {
             return null;
         }
-        // return null;
+      
     }
 
-    public byte[] decryptPayload(byte[] payload, byte[] devAddress, /*int fCount*/ byte[] fCnt, byte[] dir) {
+    public byte[] decryptPayload(byte[] payload, byte[] devAddress, byte[] fCnt, byte[] dir) {
         try {
 
             byte[] ivKey = new byte[16];
@@ -255,8 +246,8 @@ public class LoraWanReceiver {
             ivKey[8] = devAddress[1];
             ivKey[9] = devAddress[0];
 
-            ivKey[10] = fCnt[0];
-            ivKey[11] = fCnt[1];
+            ivKey[10] = fCnt[1];
+            ivKey[11] = fCnt[0];
 
             IvParameterSpec ivParameterSpec = new IvParameterSpec(ivKey);
 
@@ -294,7 +285,7 @@ public class LoraWanReceiver {
         return null;
     }
 
-    //Not in use
+    //Not in use yet
     public byte[] deriveNwSKey(byte[] AppNonce, byte[] DevNonce) {
         try {
             SecretKeySpec key = new SecretKeySpec(appKey, "AES");

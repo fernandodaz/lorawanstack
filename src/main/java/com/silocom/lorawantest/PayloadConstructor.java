@@ -67,8 +67,7 @@ public class PayloadConstructor {
             payloadB64 = Base64.encodeBase64String(message);
 
             return jsonCons.SendJson(payloadB64, imme, tmst, freq, rfch, powe, modu, datr, codr, ipol, message.length, ncrc);
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException e) {
             return null;
         }
 
@@ -104,21 +103,27 @@ public class PayloadConstructor {
                 index++;
             }
             byte[] DevAddr = new byte[4];
+            
             for (int i = 3; i >= 0; i--) {
                 DevAddr[i] = srcmsg[index];
                 index++;
             }
+            
             byte DLSetting = srcmsg[index];
             index++;
+            
             byte RxDelay = srcmsg[index];
             index++;
+            
             byte[] CFList = new byte[srcmsg.length - (index + 4)];
+            
             for (int i = CFList.length - 1; i >= 0; i--) {
                 CFList[i] = srcmsg[index];
                 index++;
             }
 
             byte[] mic = new byte[4];
+            
             return new JoinAcceptMessage(MHDR, AppNonce, NetID, DevAddr, DLSetting, RxDelay, mic);
             
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException ex) {
