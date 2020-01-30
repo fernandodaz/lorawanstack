@@ -28,11 +28,10 @@ public class PayloadConstructor {
 
         byte MHDR = 0x20;
 
-         byte DLSetting = 2;
+        byte DLSetting = 2;
 
         byte RxDelay = 1;
 
-        
         byte[] mic = Mic.calculateMicJoinResponse(MHDR, appNonce, netID, devAddr, DLSetting, RxDelay, null, appKey);
 
         byte[] message = new byte[16];

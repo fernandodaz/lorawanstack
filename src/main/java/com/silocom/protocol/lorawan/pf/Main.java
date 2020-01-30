@@ -25,7 +25,7 @@ public class Main {
 
         rec.addReceiver(LoraWan_N1);
 
-        LoraWanReceiver LoraWan_N2 = new LoraWanReceiver(nwSKey_N2, appSKey_N2, appKey_N2, netID, appEUI_N2, devEUIExpected_N2, devAddrExpected_N2,
+       LoraWanReceiver LoraWan_N2 = new LoraWanReceiver(nwSKey_N2, appSKey_N2, appKey_N2, netID, appEUI_N2, devEUIExpected_N2, devAddrExpected_N2,
                 rec, new SensorListener() {
             @Override
             public void onData(Sensor sensor) {
@@ -95,6 +95,6 @@ public class Main {
         (byte) 0x40, (byte) 0x41, (byte) 0x00, (byte) 0x01, (byte) 0x81,
         (byte) 0xBB, (byte) 0xDC};
 
-    private static final byte[] devAddrExpected_N2 = new byte[]{(byte) 0x01, (byte) 0x01, (byte) 0x00, (byte) 0x01};
+    private static final byte[] devAddrExpected_N2 = new byte[]{(byte) 0x01, (byte) 0x00, (byte) 0x01, (byte) 0x01};
 
 }

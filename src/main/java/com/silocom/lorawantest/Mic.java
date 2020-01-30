@@ -54,6 +54,7 @@ public abstract class Mic {
         byte[] answer = new byte[4];
         cmac.doFinal(temp, 0);
         System.arraycopy(temp, 0, answer, 0, answer.length);
+        
         return answer;
     }
 

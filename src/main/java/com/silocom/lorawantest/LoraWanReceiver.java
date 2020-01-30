@@ -52,16 +52,16 @@ public class LoraWanReceiver {
     private final byte[] netID;
 
     private final byte[] appEUI;
-    private final byte[] devEUIExpected;
-    private final byte[] devAddrExpected;
+    private final byte[] devEUI_Expected;
+    private final byte[] devAddr_Expected;
 
     private final Cipher cipher;
     private final SensorListener listener;
     private final Random rand = new Random();
     private final JsonParser parser = new JsonParser();
 
-    public LoraWanReceiver(byte[] nwSKey, byte[] appSKey, byte[] appKey, byte[] netID, byte[] appEUI, byte[] devEUIExpected,
-            byte[] devAddrExpected, PacketForwarder pf,
+    public LoraWanReceiver(byte[] nwSKey, byte[] appSKey, byte[] appKey, byte[] netID, byte[] appEUI, byte[] devEUI_Expected,
+            byte[] devAddr_Expected, PacketForwarder pf,
             SensorListener listener) throws NoSuchAlgorithmException, NoSuchPaddingException {
 
         this.cipher = Cipher.getInstance("AES/CTR/PKCS5Padding");
@@ -72,8 +72,8 @@ public class LoraWanReceiver {
         this.netID = netID;
 
         this.appEUI = appEUI;
-        this.devEUIExpected = devEUIExpected;
-        this.devAddrExpected = devAddrExpected;
+        this.devEUI_Expected = devEUI_Expected;
+        this.devAddr_Expected = devAddr_Expected;
 
         this.pForwarder = pf;
         this.jsonCons = new JsonConstructor();
@@ -86,7 +86,6 @@ public class LoraWanReceiver {
 
         byte[] decodeMessage = Base64.decodeBase64(message);
         int mType = decodeMessage[0] & 0xFF;
-
         switch (mType) {
 
             case joinRequest:
@@ -94,7 +93,7 @@ public class LoraWanReceiver {
                 String string = new String(messageComplete);
                 System.out.println(" Join Request: " + string);
 
-                decodeJoinRequest(message, imme, tmst, freq, rfch, powe, modu, datr, codr, ipol, size, ncrc, appKey, devAddrExpected);
+                decodeJoinRequest(message, imme, tmst, freq, rfch, powe, modu, datr, codr, ipol, size, ncrc, appKey, devAddr_Expected);
                 break;
 
             case joinAccept:
@@ -132,41 +131,42 @@ public class LoraWanReceiver {
 
             default:
                 sensorDecoder(message, rssi, time);
-
+                  
         }
 
     }
 
     public void decodeJoinRequest(String message, boolean imme, long tmst, float freq, int rfch, int powe,
-            String modu, String datr, String codr, boolean ipol, int size, boolean ncrc, byte[] appKey, byte[] devAddrExpected) {
+            String modu, String datr, String codr, boolean ipol, int size, boolean ncrc, byte[] appKey, byte[] devAddr_Expected) {
 
         byte[] decodeMessage = Base64.decodeBase64(message);
         int mType = (decodeMessage[0] & 0xE0) << 5;
 
-        long appEUI = (decodeMessage[1] & 0xFF)
-                | (decodeMessage[2] & (long) 0xFF) << 8
-                | (decodeMessage[3] & (long) 0xFF) << 16
-                | (decodeMessage[4] & (long) 0xFF) << 24
-                | (decodeMessage[5] & (long) 0xFF) << 32
-                | (decodeMessage[6] & (long) 0xFF) << 40
-                | (decodeMessage[7] & (long) 0xFF) << 48
-                | (decodeMessage[8] & (long) 0xFF) << 56;
+        byte[] appEUI_Received = new byte[8];
+                appEUI_Received[0] = decodeMessage[1];
+                appEUI_Received[1] = decodeMessage[2];
+                appEUI_Received[2] = decodeMessage[3];
+                appEUI_Received[3] = decodeMessage[4];
+                appEUI_Received[4] = decodeMessage[5];
+                appEUI_Received[5] = decodeMessage[6];
+                appEUI_Received[6] = decodeMessage[7];
+                appEUI_Received[7] = decodeMessage[8];
 
-        byte[] devEUIReceived = new byte[8];
-        devEUIReceived[0] = decodeMessage[16];
-        devEUIReceived[1] = decodeMessage[15];
-        devEUIReceived[2] = decodeMessage[14];
-        devEUIReceived[3] = decodeMessage[13];
-        devEUIReceived[4] = decodeMessage[12];
-        devEUIReceived[5] = decodeMessage[11];
-        devEUIReceived[6] = decodeMessage[10];
-        devEUIReceived[7] = decodeMessage[9];
+        byte[] devEUI_Received = new byte[8];
+        devEUI_Received[0] = decodeMessage[16];
+        devEUI_Received[1] = decodeMessage[15];
+        devEUI_Received[2] = decodeMessage[14];
+        devEUI_Received[3] = decodeMessage[13];
+        devEUI_Received[4] = decodeMessage[12];
+        devEUI_Received[5] = decodeMessage[11];
+        devEUI_Received[6] = decodeMessage[10];
+        devEUI_Received[7] = decodeMessage[9];
 
-        if (Arrays.equals(devEUIReceived, devEUIExpected)) { //verificar si el mensaje es para mi
+        if (Arrays.equals(devEUI_Received, devEUI_Expected)) { //verificar si el mensaje es para mi
             
             byte[] devNonce = new byte[2];
-            devNonce[0] = decodeMessage[17];   //pasar a byte
-            devNonce[1] = decodeMessage[18];
+            devNonce[0] = decodeMessage[18];   //pasar a byte
+            devNonce[1] = decodeMessage[17];
             
             byte[] appNonce = new byte[3];
             new Random().nextBytes(appNonce); 
@@ -174,10 +174,8 @@ public class LoraWanReceiver {
             appSKey = deriveAppSKey(appNonce, netID, devNonce);
             nwSKey = deriveNwSKey(appNonce, netID, devNonce);
 
-            this.pForwarder.sendMessage(Sender.JoinAccept(appNonce, imme, tmst, freq, rfch, powe, modu, datr, codr, ipol, size, ncrc, appKey, netID, devAddrExpected));
+            this.pForwarder.sendMessage(Sender.JoinAccept(appNonce, imme, tmst, freq, rfch, powe, modu, datr, codr, ipol, size, ncrc, appKey, netID, devAddr_Expected));
 
-        } else {
-            System.out.println(" no es el devEUI esperado ");
         }
 
     }
@@ -200,13 +198,20 @@ public class LoraWanReceiver {
             tempBuiltInVal |= 0xFFFF0000;
         }
         int tempBuiltIn = tempBuiltInVal;
+        
         int Hum = (((rawData[4] & 0xFF) << 8) | (rawData[5] & 0xFF));
 
         int tempExtVal = (((rawData[7] & 0xFF) << 8) | (rawData[8] & 0xFF));
+        
         if ((rawData[7] & 0x80) > 0) {
             tempExtVal |= 0xFFFF0000;
         }
+       
         int tempExt = tempExtVal; //DS18B20,
+        
+        System.out.println("tempExtVal: " + tempExtVal);
+        System.out.println("tempExt: " + tempExt);
+        System.out.println("Hum: " + Hum);
 
         Sensor sensor = new Sensor(batVal, batStat, tempBuiltIn, Hum, tempExt, rssi, time);
         listener.onData(sensor);
@@ -214,45 +219,49 @@ public class LoraWanReceiver {
 
     public byte[] decodeMACPayload(String message) {
         byte[] decodeMessage = Base64.decodeBase64(message);
-        int mType = decodeMessage[0] & 0xFF;
-        byte[] devAddrReceived = new byte[4];
+      
+        byte[] devAddr_Received = new byte[4];
+        devAddr_Received[0] = decodeMessage[4];
+        devAddr_Received[1] = decodeMessage[3];
+        devAddr_Received[2] = decodeMessage[2];
+        devAddr_Received[3] = decodeMessage[1];
 
-        devAddrReceived[0] = (byte) (decodeMessage[1] & 0xff);
-        devAddrReceived[1] = (byte) (decodeMessage[2] & 0xff);
-        devAddrReceived[2] = (byte) (decodeMessage[3] & 0xff);
-        devAddrReceived[3] = (byte) (decodeMessage[4] & 0xff);
-
-        int fCtrl = decodeMessage[5] & 0xFF;
-        int fCount = ((decodeMessage[7] & 0xff) << 8 | (decodeMessage[6] & 0xff));
-
-        if (Arrays.equals(devAddrReceived, devAddrExpected)) {//comparar devAddr
+        //int fCount = ((decodeMessage[7] & 0xff) << 8 | (decodeMessage[6] & 0xff));
+          
+         byte[] fCnt = new byte[2];
+         fCnt[0] = decodeMessage[7];        
+         fCnt[1] = decodeMessage[6];        
+         
+        if (Arrays.equals(devAddr_Received, devAddr_Expected)) {//comparar devAddr
 
             byte[] payload = new byte[decodeMessage.length - 9];
             System.arraycopy(decodeMessage, 9, payload, 0, decodeMessage.length - 9);
-            return decryptPayload(payload, devAddrExpected, fCount, (byte) 0);
+            byte[] dir = new byte[1];
+            return decryptPayload(payload, devAddr_Expected, /*fCount*/ fCnt, dir);
         } else {
-            System.out.println(" no es el devAddr esperado ");
+              return null;
         }
-        return null;
-    } //add
-    //comm
-    //ann
+       // return null;
+    } 
+    
+    
 
-    public byte[] decryptPayload(byte[] payload, byte[] devAddress, int fCount, byte dir) {
+    public byte[] decryptPayload(byte[] payload, byte[] devAddress, /*int fCount*/ byte[] fCnt, byte[] dir) {
         try {
+            
             byte[] ivKey = new byte[16];
             Arrays.fill(ivKey, (byte) 0);
             ivKey[0] = 1;
             ivKey[15] = 1;
 
-            ivKey[5] = dir;
+            ivKey[5] = dir[0];
             ivKey[6] = devAddress[0];
             ivKey[7] = devAddress[1];
             ivKey[8] = devAddress[2];
             ivKey[9] = devAddress[3];
 
-            ivKey[10] = (byte) ((fCount) & 0xFF);
-            ivKey[11] = (byte) ((fCount >> 8) & 0xFF);
+            ivKey[10] = fCnt[0];    //fCnt[0]
+            ivKey[11] = fCnt[1];  //fCnt[1]
 
             IvParameterSpec ivParameterSpec = new IvParameterSpec(ivKey);
 
@@ -268,6 +277,7 @@ public class LoraWanReceiver {
     public byte[] deriveAppSKey(byte[] AppNonce, byte[] NetId, byte[] DevNonce) {
 
         try {
+            
             SecretKeySpec key = new SecretKeySpec(appKey, "AES");
             Cipher ciph = Cipher.getInstance("AES/ECB/NoPadding");
             ciph.init(Cipher.ENCRYPT_MODE, key);
@@ -282,12 +292,15 @@ public class LoraWanReceiver {
             toKey[6] = NetId[2];
             toKey[7] = DevNonce[0];
             toKey[8] = DevNonce[1];
+           
             return ciph.update(toKey);
         } catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException ignore) {
         }
         return null;
     }
 
+    
+    //Not in use
     public byte[] deriveNwSKey(byte[] AppNonce, byte[] NetId, byte[] DevNonce) {
         try {
             SecretKeySpec key = new SecretKeySpec(appKey, "AES");
@@ -304,6 +317,7 @@ public class LoraWanReceiver {
             toKey[6] = NetId[2];
             toKey[7] = DevNonce[0];
             toKey[8] = DevNonce[1];
+       
             return ciph.update(toKey);
         } catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException ignore) {
         }
