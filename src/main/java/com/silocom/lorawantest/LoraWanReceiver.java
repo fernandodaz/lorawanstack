@@ -278,8 +278,10 @@ public class LoraWanReceiver {
             toKey[6] = netID[0];
             toKey[7] = DevNonce[1];
             toKey[8] = DevNonce[0];
-
+            
+            listener.updateAppSKey(ciph.update(toKey));
             return ciph.update(toKey);
+            
         } catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException ignore) {
         }
         return null;
@@ -302,7 +304,8 @@ public class LoraWanReceiver {
             toKey[6] = netID[2];
             toKey[7] = DevNonce[0];
             toKey[8] = DevNonce[1];
-
+            
+            listener.updateNwSKey(ciph.update(toKey));
             return ciph.update(toKey);
         } catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException ignore) {
         }

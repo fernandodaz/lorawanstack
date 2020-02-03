@@ -21,6 +21,16 @@ public class Main {
             public void onData(Sensor sensor) {
                 System.out.println(" Sensor_N1 " + sensor.getTempBuiltIn());
             }
+
+            @Override
+            public void updateAppSKey(byte[] appSKey) {
+               // throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+
+            @Override
+            public void updateNwSKey(byte[] nwSkey) {
+              //  throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
         });
 
         rec.addReceiver(LoraWan_N1);
@@ -30,6 +40,16 @@ public class Main {
             @Override
             public void onData(Sensor sensor) {
                 System.out.println(" Sensor_N2 " + sensor.getTempBuiltIn());
+            }
+
+            @Override
+            public void updateAppSKey(byte[] appSKey) {
+             //   throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+
+            @Override
+            public void updateNwSKey(byte[] nwSkey) {
+              //  throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
             }
         });
 

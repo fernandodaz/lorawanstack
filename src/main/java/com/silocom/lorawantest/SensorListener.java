@@ -7,4 +7,8 @@ package com.silocom.lorawantest;
 public interface SensorListener {
  
     public void onData(Sensor sensor);
+    
+    public void updateAppSKey(byte[] appSKey);
+    
+    public void updateNwSKey(byte[] nwSkey);
 }
