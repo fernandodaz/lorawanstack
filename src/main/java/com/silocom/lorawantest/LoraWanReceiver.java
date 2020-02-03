@@ -77,7 +77,7 @@ public class LoraWanReceiver {
 
     }
 
-    public void ReceiveMessage(byte[] messageComplete, String message, boolean imme, long tmst, float freq, int rfch, int powe,
+    public void ReceiveMessage(byte[] messageComplete, String message, boolean imme, long tmst, double freq, int rfch, int powe,
             String modu, String datr, String codr, boolean ipol, int size, boolean ncrc, int rssi, String time) {
 
         byte[] decodeMessage = Base64.decodeBase64(message);
@@ -131,7 +131,7 @@ public class LoraWanReceiver {
 
     }
 
-    public void decodeJoinRequest(String message, boolean imme, long tmst, float freq, int rfch, int powe,
+    public void decodeJoinRequest(String message, boolean imme, long tmst, double freq, int rfch, int powe,
             String modu, String datr, String codr, boolean ipol, int size, boolean ncrc, byte[] appKey, byte[] devAddr_Expected) {
 
         byte[] decodeMessage = Base64.decodeBase64(message);
@@ -168,7 +168,8 @@ public class LoraWanReceiver {
 
             appSKey = deriveAppSKey(appNonce, devNonce);
             nwSKey = deriveNwSKey(appNonce, devNonce);
-
+            listener.updateAppSKey(appSKey);
+            listener.updateNwSKey(nwSKey);
             this.pForwarder.sendMessage(Sender.JoinAccept(appNonce, imme, tmst, freq, rfch, powe, modu, datr, codr, ipol, size, ncrc, appKey, netID, devAddr_Expected));
 
         }
@@ -279,7 +280,7 @@ public class LoraWanReceiver {
             toKey[7] = DevNonce[1];
             toKey[8] = DevNonce[0];
             
-            listener.updateAppSKey(ciph.update(toKey));
+            
             return ciph.update(toKey);
             
         } catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException ignore) {
@@ -305,7 +306,7 @@ public class LoraWanReceiver {
             toKey[7] = DevNonce[0];
             toKey[8] = DevNonce[1];
             
-            listener.updateNwSKey(ciph.update(toKey));
+            
             return ciph.update(toKey);
         } catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException ignore) {
         }

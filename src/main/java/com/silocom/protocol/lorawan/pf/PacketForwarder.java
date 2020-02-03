@@ -82,7 +82,7 @@ public class PacketForwarder implements MessageListener {
                                     String time = gsonObj.get("time").getAsString();
                                     long tmst = gsonObj.get("tmst").getAsLong();
                                     int rssi = gsonObj.get("rssi").getAsInt();
-                                    float freq = (float) 923.2;
+                                    double freq = 923.2;
 
                                     //Mensaje, data, Imme, Tmst, freq, rfch, pow,modu, datr, codr, ipol, size, ncrc
                                     receivers.forEach((receiver) -> {

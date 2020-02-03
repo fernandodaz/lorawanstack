@@ -8,7 +8,7 @@ import com.google.gson.GsonBuilder;
 
 public class JsonConstructor {
 
-    public String SendJson(String data, boolean imme, long tmst, float freq, int rfch, int powe, String modu, String datr,
+    public String SendJson(String data, boolean imme, long tmst, double freq, int rfch, int powe, String modu, String datr,
             String codr, boolean ipol, int size, boolean ncrc) {
 
         Gson gson = new GsonBuilder().disableHtmlEscaping().create();
@@ -34,7 +34,7 @@ public class JsonConstructor {
 
         public boolean imme;
         public long tmst;
-        public float freq;
+        public double freq;
         public int rfch;
         public int powe;
         public String modu;
@@ -45,7 +45,7 @@ public class JsonConstructor {
         public boolean ncrc;
         public String data;
 
-        public JsonMessage(boolean imme, long tmst, float freq, int rfch, int powe, String modu, String datr, String codr, boolean ipol, int size, boolean ncrc, String data) {
+        public JsonMessage(boolean imme, long tmst, double freq, int rfch, int powe, String modu, String datr, String codr, boolean ipol, int size, boolean ncrc, String data) {
 
             this.imme = imme;
             this.tmst = tmst;

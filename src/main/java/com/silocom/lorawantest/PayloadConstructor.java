@@ -23,7 +23,7 @@ public class PayloadConstructor {
         this.jsonCons = jsonCons;
     }
 
-    public String JoinAccept(byte[] appNonce, boolean imme, long tmst, float freq, int rfch, int powe, String modu,
+    public String JoinAccept(byte[] appNonce, boolean imme, long tmst, double freq, int rfch, int powe, String modu,
             String datr, String codr, boolean ipol, int size, boolean ncrc, byte[] appKey, byte[] netID, byte[] devAddr) {  //falta pasar APPEUI,DevEUI, APPKEY
 
         byte MHDR = 0x20;
